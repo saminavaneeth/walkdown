@@ -1,0 +1,433 @@
+<!--HEAD-->
+<title>Walkdown</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Concept prototype: turn a safety professional's voice notes, photos, video and documents into linked records across existing EHS systems.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a phone-first app shell. Header on top, one column of content, tab bar fixed to the bottom. Field notes are ruled like a field book and evidence is marked with a highlighter; each connected system has its own code badge. */
+:root{
+  --bg:#EDF1EF; --surface:#FFFFFF; --sunk:#F4F7F5; --ink:#17201D; --muted:#56635E; --line:#D2DAD6; --rule:#D9E4EA;
+  --marker:#FFE14F; --marker-soft:#FFF2A8; --marker-ink:#15140B;
+  --accent:#1B5DAB; --accent-soft:#E2EBF7;
+  --danger:#B42229; --danger-soft:#FBE6E6;
+  --warn:#A9500F; --warn-soft:#FCEBDC;
+  --ok:#14744A; --ok-soft:#DFF1E7;
+  --private:#5C4495; --private-soft:#ECE6F7;
+  --btn:#17201D; --btn-ink:#FFFFFF;
+  --s-ehs:#1B5DAB; --s-cmms:#9A4A0B; --s-ptw:#6B3FA0; --s-lms:#0F6E56; --s-alerts:#B42229;
+  --f-display:"Barlow Condensed","Arial Narrow","Roboto Condensed",sans-serif;
+  --f-body:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --r:8px; --nav-h:62px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1513; --surface:#171F1C; --sunk:#131A17; --ink:#E2E9E5; --muted:#9AA8A2; --line:#2B3632; --rule:#22302E;
+    --marker:#F2CF2B; --marker-soft:rgba(255,212,30,.24); --marker-ink:#15140B;
+    --accent:#86B3F0; --accent-soft:#1B2A3F;
+    --danger:#F28B8F; --danger-soft:#3A1B1D;
+    --warn:#F1A66C; --warn-soft:#3A2717;
+    --ok:#73D3A2; --ok-soft:#14301F;
+    --private:#BBA6EF; --private-soft:#2A2340;
+    --btn:#E2E9E5; --btn-ink:#0F1513;
+    --s-ehs:#86B3F0; --s-cmms:#F1A66C; --s-ptw:#BBA6EF; --s-lms:#6FD3B4; --s-alerts:#F28B8F;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1513; --surface:#171F1C; --sunk:#131A17; --ink:#E2E9E5; --muted:#9AA8A2; --line:#2B3632; --rule:#22302E;
+  --marker:#F2CF2B; --marker-soft:rgba(255,212,30,.24); --marker-ink:#15140B;
+  --accent:#86B3F0; --accent-soft:#1B2A3F;
+  --danger:#F28B8F; --danger-soft:#3A1B1D;
+  --warn:#F1A66C; --warn-soft:#3A2717;
+  --ok:#73D3A2; --ok-soft:#14301F;
+  --private:#BBA6EF; --private-soft:#2A2340;
+  --btn:#E2E9E5; --btn-ink:#0F1513;
+  --s-ehs:#86B3F0; --s-cmms:#F1A66C; --s-ptw:#BBA6EF; --s-lms:#6FD3B4; --s-alerts:#F28B8F;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);-webkit-font-smoothing:antialiased;margin:0}
+h1,h2,h3{text-wrap:balance;margin:0}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.col{max-width:760px;margin:0 auto}
+
+/* Header */
+.top{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.top-in{display:flex;align-items:center;gap:10px;padding-block:10px}
+.tape{width:24px;height:24px;border-radius:4px;flex:none;background:repeating-linear-gradient(-45deg,var(--marker) 0 5px,var(--ink) 5px 10px)}
+.brand{flex:1;min-width:0}
+.brand h1{font:700 23px/1 var(--f-display);letter-spacing:.02em}
+.brand p{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mode{font:600 12px/1 var(--f-display);letter-spacing:.07em;text-transform:uppercase;padding:6px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.mode.live{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.icon-btn{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:7px 10px;font:700 13px/1 var(--f-body);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+
+/* Main */
+main{padding-block:16px calc(var(--nav-h) + 96px + env(safe-area-inset-bottom,0px))}
+.view{display:grid;gap:16px}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+h2.sec{font:700 19px/1.15 var(--f-display);letter-spacing:.06em;text-transform:uppercase}
+.eyebrow{font:600 12.5px/1.2 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.note{font-size:13.5px;color:var(--muted);line-height:1.45}
+.muted{color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;font:700 14px/1 var(--f-body);padding:11px 14px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;white-space:nowrap;min-height:42px}
+.btn:hover:not(:disabled){border-color:var(--muted)}
+.btn.primary{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}
+.btn.ok{background:var(--ok);color:var(--surface);border-color:var(--ok)}
+.btn.danger{background:var(--danger);color:var(--surface);border-color:var(--danger)}
+.btn.small{padding:7px 10px;font-size:13px;min-height:34px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.link{appearance:none;background:none;border:0;color:var(--accent);cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px;font-size:inherit;text-align:left}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:600 12px/1 var(--f-display);letter-spacing:.05em;text-transform:uppercase;padding:4px 7px 3px;border-radius:3px;white-space:nowrap;display:inline-block}
+.k-danger{background:var(--danger-soft);color:var(--danger)} .k-warn{background:var(--warn-soft);color:var(--warn)} .k-accent{background:var(--accent-soft);color:var(--accent)} .k-private{background:var(--private-soft);color:var(--private)} .k-ok{background:var(--ok-soft);color:var(--ok)} .k-plain{background:var(--sunk);color:var(--muted)}
+.sys{font:500 11.5px/1 var(--f-mono);letter-spacing:.03em;padding:4px 6px;border-radius:3px;border:1.5px solid currentColor;white-space:nowrap;display:inline-block}
+.sys-ehs{color:var(--s-ehs)} .sys-cmms{color:var(--s-cmms)} .sys-ptw{color:var(--s-ptw)} .sys-lms{color:var(--s-lms)} .sys-alerts{color:var(--s-alerts)}
+
+/* Capture */
+.intro{display:grid;gap:6px}
+.intro p.lead{font-size:16px;line-height:1.5}
+.scen{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:10px}
+.scen button{appearance:none;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;cursor:pointer;display:grid;gap:6px;align-content:start}
+.scen button:hover{border-color:var(--muted)}
+.scen button[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.scen b{font:700 16px/1.25 var(--f-body)}
+.scen .inputs{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;color:var(--muted)}
+.composer{display:grid;gap:12px}
+.voice{display:flex;align-items:center;gap:10px;background:var(--sunk);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;font-size:13.5px}
+.voice .wave{flex:1;height:18px;background:repeating-linear-gradient(90deg,var(--muted) 0 2px,transparent 2px 5px);opacity:.35;border-radius:2px;min-width:40px}
+.paper{display:block;width:100%;margin:0;background-color:var(--surface);background-image:linear-gradient(to bottom,transparent 27px,var(--rule) 27px);background-size:100% 28px;background-position:0 12px;background-attachment:local;border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;font:16px/28px var(--f-body);color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
+textarea.paper{resize:vertical;min-height:196px}
+.media{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+.tile{position:relative;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--sunk);aspect-ratio:1/1;max-width:100%;display:grid;align-content:end}
+.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tile .ph{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted)}
+.tile .ph svg{width:34px;height:34px}
+.tile .cap{position:relative;background:linear-gradient(transparent,rgba(0,0,0,.62));color:#fff;padding:18px 7px 6px;font-size:11.5px;line-height:1.25}
+.tile .cap b{display:block;font:500 11px/1.2 var(--f-mono)}
+.tile .rm{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:var(--ink);color:var(--surface);cursor:pointer;font-size:15px;line-height:26px;padding:0}
+.tile .demo-tag{position:absolute;top:5px;left:5px;font:500 10.5px/1 var(--f-mono);background:var(--surface);color:var(--muted);padding:3px 4px;border-radius:3px}
+.adds{display:flex;flex-wrap:wrap;gap:8px}
+.file-btn{position:relative;overflow:hidden}
+.file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+.warnbox{border:1px dashed var(--warn);background:var(--warn-soft);border-radius:var(--r);padding:10px 12px;font-size:13.5px}
+.stages{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.stages li{display:flex;gap:10px;align-items:center;font-size:14.5px;color:var(--muted)}
+.stages li .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center;font-size:11px}
+.stages li.active{color:var(--ink);font-weight:700}
+.stages li.active .dot{border-color:var(--ink);border-top-color:transparent;animation:spin .9s linear infinite}
+.stages li.done{color:var(--ink)}
+.stages li.done .dot{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Plan */
+.alert{border:1.5px solid var(--danger);background:var(--danger-soft);border-radius:var(--r);padding:12px 14px;display:grid;gap:8px}
+.alert h3{font:700 17px/1.2 var(--f-display);letter-spacing:.05em;text-transform:uppercase;color:var(--danger)}
+.alert p{font-size:14px}
+.summary{display:grid;gap:10px}
+.summary h2{font:700 24px/1.15 var(--f-display);letter-spacing:.02em}
+.stats{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13.5px;color:var(--muted)}
+.stats b{color:var(--ink);font-variant-numeric:tabular-nums}
+.recbadge{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.recbadge b{font:600 11.5px/1 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);border:1px solid var(--line);padding:4px 6px;border-radius:3px;background:var(--surface)}
+details.captured{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+details.captured>summary{cursor:pointer;font:600 14px/1.2 var(--f-display);letter-spacing:.07em;text-transform:uppercase}
+details.captured[open]>summary{margin-bottom:10px}
+.sources{display:grid;gap:10px}
+.src-label{font:600 12px/1.2 var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+mark.ev{background:var(--marker-soft);color:inherit;border-radius:2px;padding:1px 0;-webkit-box-decoration-break:clone;box-decoration-break:clone;cursor:pointer}
+mark.ev.on{background:var(--marker);color:var(--marker-ink)}
+.gap{text-decoration:underline dotted var(--danger) 2px;text-underline-offset:6px}
+.skip{color:var(--muted);text-decoration:underline dashed var(--muted) 1px;text-underline-offset:6px}
+.fast{box-shadow:inset 0 -3px 0 var(--danger);font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{display:inline-block;width:18px;height:11px;border-radius:2px}
+.sw.ev{background:var(--marker-soft);box-shadow:inset 0 0 0 1px var(--marker)} .sw.gap{height:0;border-bottom:2px dotted var(--danger)} .sw.skip{height:0;border-bottom:1px dashed var(--muted)} .sw.fast{height:0;border-bottom:3px solid var(--danger)}
+.event{display:grid;gap:10px}
+.event-h{display:flex;gap:8px;align-items:baseline;padding-top:4px}
+.event-h p{font:600 15px/1.3 var(--f-display);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:10px;transition:border-color .15s}
+.step.hl{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.step.st-approved{border-color:var(--accent)}
+.step.ex-sent{border-color:var(--ok)}
+.step.st-skipped{opacity:.55}
+.shead{display:flex;gap:10px;align-items:flex-start}
+.num{font:700 20px/1 var(--f-display);color:var(--muted);min-width:1.2em;text-align:right;padding-top:2px;font-variant-numeric:tabular-nums}
+.stitle{flex:1;min-width:0;display:grid;gap:3px}
+.verb{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font:600 12.5px/1.2 var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.stitle h3{font:700 16.5px/1.3 var(--f-body)}
+.pill{font:600 11.5px/1 var(--f-display);letter-spacing:.07em;text-transform:uppercase;padding:5px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;flex:none}
+.pill.approved{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.pill.sent{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.pill.queued,.pill.waiting{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.pill.failed{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.flags{display:grid;gap:5px;margin:0;padding:0;list-style:none}
+.flag{display:flex;gap:8px;align-items:baseline;font-size:13.5px;line-height:1.4;flex-wrap:wrap}
+.flag .ft{flex:1;min-width:11rem}
+.by{font:500 10.5px/1 var(--f-mono);color:var(--muted)}
+details.fw>summary{cursor:pointer;font-size:13.5px;color:var(--accent);list-style:none}
+details.fw>summary::-webkit-details-marker{display:none}
+details.fw>summary::before{content:"▸ ";color:var(--muted)}
+details.fw[open]>summary::before{content:"▾ "}
+.fields{display:grid;gap:10px;margin-top:10px}
+.frow{display:grid;grid-template-columns:minmax(0,1fr);gap:4px}
+@media (min-width:560px){.frow{grid-template-columns:9.5rem minmax(0,1fr);gap:12px}}
+.flabel{font-size:13px;color:var(--muted);padding-top:6px;display:flex;flex-wrap:wrap;gap:4px 6px;align-items:baseline}
+.req{color:var(--danger);font-weight:700}
+.fval{display:grid;gap:5px;min-width:0;justify-items:start}
+.ctl{width:100%;font:15px/1.4 var(--f-body);background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:7px 8px;min-width:0}
+textarea.ctl{resize:vertical}
+.ctl:disabled{opacity:.85}
+.frow.missing .ctl{border-color:var(--danger);border-style:dashed}
+.frow.restricted .ctl{background:var(--private-soft);border-color:transparent}
+.linkval{font:500 13.5px/1.3 var(--f-mono);padding:6px 0;color:var(--muted)}
+.linkval.set{color:var(--ok)}
+.evq{appearance:none;text-align:left;font:13.5px/1.45 var(--f-body);background:var(--marker-soft);border:0;border-radius:3px;padding:2px 6px;cursor:pointer;max-width:100%}
+.evq:hover,.evq:focus-visible{background:var(--marker);color:var(--marker-ink)}
+.evq.approx{background:transparent;box-shadow:inset 0 0 0 1px var(--marker)}
+.evq.bad{background:transparent;color:var(--muted);text-decoration:line-through;cursor:default}
+.evsrc{font:500 10.5px/1 var(--f-mono);color:var(--muted)}
+.fnote{font-size:12.5px;color:var(--danger);line-height:1.4}
+.fnote.decide{color:var(--accent)} .fnote.soft{color:var(--warn)} .fnote s{color:var(--muted)}
+.pol{font:600 10.5px/1 var(--f-display);letter-spacing:.05em;text-transform:uppercase;padding:3px 5px 2px;border-radius:3px;white-space:nowrap}
+.pol-decide{background:var(--accent-soft);color:var(--accent)} .pol-priv{background:var(--private-soft);color:var(--private)}
+.edited{font:500 10.5px/1 var(--f-mono);color:var(--accent)}
+.deps{font-size:13px;color:var(--muted)}
+.qs{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.qh{font:600 12px/1.2 var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.q label{font-size:14px;display:block;margin-bottom:4px}
+.result{border-radius:6px;padding:9px 10px;font-size:13.5px;display:grid;gap:4px}
+.result.sent{background:var(--ok-soft)} .result.queued,.result.waiting{background:var(--warn-soft)} .result.failed{background:var(--danger-soft)} .result.sending{background:var(--sunk)}
+.result .rid{font:500 14px/1.2 var(--f-mono)}
+.sfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px}
+.ready{font-size:13px;color:var(--muted)} .ready.yes{color:var(--ok)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.inject{border:1px solid var(--accent);background:var(--accent-soft);border-radius:var(--r);padding:10px 12px;font-size:14px;display:grid;gap:6px}
+.inject ul{margin:0;padding-left:18px;display:grid;gap:3px}
+.dock{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px));z-index:9;background:var(--bg);border-top:1px solid var(--line);padding-block:10px}
+.dock .col{display:flex;gap:10px;align-items:center}
+.dock .info{flex:1;min-width:0;font-size:13px;color:var(--muted)}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:22px 18px;display:grid;gap:10px}
+.empty h3{font:700 18px/1.2 var(--f-display);letter-spacing:.05em;text-transform:uppercase}
+
+/* Systems */
+.sysgrid{display:grid;gap:12px}
+.syscard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:10px}
+.syshead{display:flex;gap:10px;align-items:center}
+.syshead h3{font:700 16px/1.2 var(--f-body);flex:1;min-width:0}
+.syshead .note{display:block;font-weight:400}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none;white-space:nowrap}
+.toggle input{position:absolute;opacity:0;width:1px;height:1px}
+.toggle .tr{width:36px;height:20px;border-radius:10px;background:var(--ok);position:relative;transition:background .2s;flex:none}
+.toggle .tr::after{content:"";position:absolute;top:2px;left:18px;width:16px;height:16px;border-radius:50%;background:var(--surface);transition:left .2s}
+.toggle input:not(:checked)+.tr{background:var(--danger)}
+.toggle input:not(:checked)+.tr::after{left:2px}
+.toggle input:focus-visible+.tr{outline:2px solid var(--accent);outline-offset:2px}
+.recs{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.rec{border-top:1px solid var(--line);padding-top:8px;display:grid;gap:3px}
+.rec .rid{font:500 13.5px/1.2 var(--f-mono)}
+.rec .rt{font-weight:700}
+.rec .rv{font-size:13px;color:var(--muted)}
+.rec .lk{display:flex;flex-wrap:wrap;gap:6px;font:500 12px/1.2 var(--f-mono)}
+.rec .lk span{background:var(--sunk);border-radius:3px;padding:3px 5px}
+.permits{font-size:13px;display:grid;gap:6px}
+
+/* Activity */
+.log{display:grid;gap:0;margin:0;padding:0;list-style:none}
+.log li{display:grid;grid-template-columns:4.2rem minmax(0,1fr);gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.log time{font:500 12px/1.4 var(--f-mono);color:var(--muted)}
+
+/* About */
+.about{display:grid;gap:22px;max-width:68ch}
+.about .lead{font-size:17px;line-height:1.55}
+.about p{line-height:1.6}
+.about ul{margin:6px 0 0;padding-left:20px;display:grid;gap:5px;line-height:1.5}
+.steps-list{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px;counter-reset:s}
+.steps-list li{display:grid;grid-template-columns:1.8rem minmax(0,1fr);gap:8px;align-items:baseline;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:9px 12px;counter-increment:s}
+.steps-list li::before{content:counter(s);font:700 20px/1 var(--f-display);color:var(--muted)}
+.steps-list b{display:block;font:700 14.5px/1.3 var(--f-display);letter-spacing:.06em;text-transform:uppercase}
+.real{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px}
+
+/* Nav */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav .col{display:grid;grid-template-columns:repeat(5,1fr);height:var(--nav-h)}
+.nav button{appearance:none;background:none;border:0;cursor:pointer;display:grid;justify-items:center;align-content:center;gap:3px;color:var(--muted);font:600 11.5px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;position:relative}
+.nav button svg{width:22px;height:22px}
+.nav button[aria-current="page"]{color:var(--ink)}
+.nav button[aria-current="page"]::before{content:"";position:absolute;top:0;left:22%;right:22%;height:3px;background:var(--ink);border-radius:0 0 3px 3px}
+.nav .badge{position:absolute;top:7px;left:calc(50% + 6px);min-width:17px;height:17px;border-radius:9px;background:var(--danger);color:var(--surface);font:700 10.5px/17px var(--f-body);padding:0 4px;letter-spacing:0}
+
+/* Sheet */
+.sheet-bg{position:fixed;inset:0;z-index:30;background:rgba(10,14,12,.55);display:grid;align-items:end;justify-items:center}
+.sheet{width:100%;max-width:560px;max-height:88vh;overflow:auto;background:var(--surface);border-radius:14px 14px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:grid;gap:14px}
+@media (min-width:600px){.sheet-bg{align-items:center}.sheet{border-radius:14px}}
+.sheet h2{font:700 21px/1.15 var(--f-display);letter-spacing:.04em;text-transform:uppercase}
+.sheet label.lbl{font-size:14px;font-weight:700;display:block;margin-bottom:6px}
+.rate{display:flex;gap:6px}
+.rate button{appearance:none;flex:1;min-height:42px;border:1px solid var(--line);background:var(--sunk);border-radius:var(--r);font:700 16px/1 var(--f-body);cursor:pointer}
+.rate button[aria-pressed="true"]{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}
+.toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 76px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--btn);color:var(--btn-ink);padding:10px 14px;border-radius:var(--r);font-size:14px;z-index:40;max-width:calc(100% - 32px);text-align:center}
+.file-btn.is-off{opacity:.45;cursor:not-allowed}
+.file-btn.is-off input{cursor:not-allowed}
+.errline{color:var(--danger);font-weight:700}
+.src-thumbs{display:flex;gap:6px;margin-bottom:6px}
+.src-thumbs img{height:72px;width:auto;border-radius:5px;border:1px solid var(--line)}
+.inject li.miss{color:var(--danger)}
+.inject .mk{font:500 12px/1 var(--f-mono);margin-right:4px}
+.alert .result{background:var(--surface)}
+.leftout{margin:10px 0 0;padding-left:18px;display:grid;gap:4px;font-size:13.5px}
+.kv{display:flex;flex-wrap:wrap;gap:4px 10px}
+.fbtext{width:100%;min-height:120px;font:13px/1.45 var(--f-mono)}
+.flash{animation:flash 1.2s ease-out}
+@keyframes flash{0%{box-shadow:0 0 0 4px var(--marker)}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion: reduce){.stages li.active .dot{animation:none;border-top-color:var(--ink)}.flash{animation:none;outline:2px solid var(--marker)}.step,.toggle .tr,.toggle .tr::after{transition:none}}
+</style>
+<!--/HEAD-->
+<header class="top gut">
+  <div class="col top-in">
+    <span class="tape" aria-hidden="true"></span>
+    <div class="brand"><h1>Walkdown</h1><p>Field capture to linked EHS records</p></div>
+    <span id="mode" class="mode">Checking…</span>
+    <button type="button" class="icon-btn" id="fb-open">Feedback</button>
+  </div>
+</header>
+
+<main class="gut">
+  <div class="col">
+    <!-- CAPTURE -->
+    <section id="v-capture" class="view" aria-labelledby="h-capture">
+      <div class="intro">
+        <h2 class="sec" id="h-capture">New capture</h2>
+        <p class="lead">Describe what you saw the way you would tell a colleague. Walkdown turns it into a plan of linked records across your EHS, maintenance, permit, training and alert systems. Nothing is sent until you approve it.</p>
+      </div>
+      <div>
+        <div class="sec-h"><span class="eyebrow">Try a demo scenario</span></div>
+        <div class="scen" id="scen" style="margin-top:8px"></div>
+      </div>
+      <div class="card composer" id="composer">
+        <div class="sec-h"><span class="eyebrow" id="comp-title">Your capture</span><button type="button" class="link" id="clear-draft">Clear</button></div>
+        <div id="voice" class="voice" hidden></div>
+        <label class="note" for="cap-text" id="cap-hint">Type, or tap the box and use your keyboard's microphone key to dictate.</label>
+        <textarea id="cap-text" class="paper" placeholder="Example: Walked line 3. Guard on press 7 is missing a bolt, Mike in maintenance will fix it by end of shift…"></textarea>
+        <div id="media" class="media"></div>
+        <div class="adds" id="adds">
+          <label class="btn small file-btn" id="add-photo-l">Add photo<input type="file" id="add-photo" accept="image/jpeg,image/png,image/webp" multiple></label>
+          <label class="btn small file-btn" id="add-video-l">Add video<input type="file" id="add-video" accept="video/*"></label>
+          <label class="btn small file-btn" id="add-doc-l">Add document photo<input type="file" id="add-doc" accept="image/jpeg,image/png,image/webp"></label>
+        </div>
+        <p class="note" id="media-note"></p>
+        <p class="warnbox">Use made-up details. Do not enter real names or real injury information.</p>
+        <div id="proc-msg" class="note" role="status" aria-live="polite"></div>
+        <button type="button" id="process" class="btn primary block">Build the plan</button>
+        <div id="stages-wrap" class="card" hidden><ul id="stages" class="stages"></ul><div class="row" style="margin-top:10px"><button type="button" class="btn small" id="stop" hidden>Stop</button><span id="stage-note" class="note"></span></div></div>
+      </div>
+    </section>
+
+    <!-- PLAN -->
+    <section id="v-plan" class="view" aria-labelledby="h-plan" hidden>
+      <h2 class="sec" id="h-plan">Plan</h2>
+      <div id="plan"></div>
+    </section>
+
+    <!-- SYSTEMS -->
+    <section id="v-systems" class="view" aria-labelledby="h-systems" hidden>
+      <div class="sec-h"><h2 class="sec" id="h-systems">Connected systems</h2><button type="button" class="btn small" id="reset-sys">Reset all systems</button></div>
+      <p class="note">These are mock systems that run in your browser. Each has its own record types, pick-lists and IDs, rejects invalid values, and can be switched off to simulate an outage.</p>
+      <div id="systems" class="sysgrid"></div>
+    </section>
+
+    <!-- ACTIVITY -->
+    <section id="v-activity" class="view" aria-labelledby="h-activity" hidden>
+      <div class="sec-h"><h2 class="sec" id="h-activity">Activity</h2><button type="button" class="btn small" id="clear-log">Clear</button></div>
+      <p class="note">An audit trail of what the AI proposed, what you changed, and what each system received.</p>
+      <ul id="log" class="log"></ul>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="v-about" class="view" aria-labelledby="h-about" hidden>
+      <div class="about">
+        <h2 class="sec" id="h-about">About Walkdown</h2>
+        <p class="lead">A safety professional sees a dozen things on a floor walk. Today each one is typed into a different system hours later, and the near misses, at-risk behaviors and spoken promises are what get lost. Walkdown takes one capture, in any form, and turns it into the right linked records across the systems a site already uses.</p>
+        <div>
+          <h2 class="sec">How a capture becomes a plan</h2>
+          <ol class="steps-list">
+            <li><div><b>Capture</b>Notes typed or dictated, photos, short video and photos of documents such as permits.</div></li>
+            <li><div><b>Read the media</b>Video is sampled into frames. The AI writes down what each photo, frame and document shows, including any written text.</div></li>
+            <li><div><b>Understand and plan</b>The AI splits the capture into events and proposes steps in each system: records, work orders, permit checks, training and alerts, with links between them.</div></li>
+            <li><div><b>Check</b>Rules in the app test every value before you see it. The list is below.</div></li>
+            <li><div><b>Review</b>You answer follow-up questions, fix values and approve or skip each step. Immediate alerts can go first.</div></li>
+            <li><div><b>Send</b>Steps go out in order. Each system's new ID is written into the records that depend on it, failures queue and retry, and every action is logged.</div></li>
+          </ol>
+        </div>
+        <div>
+          <h2 class="sec">Checks on every plan</h2>
+          <ul>
+            <li>Every value must quote the capture. If the quote is not there, the value is removed and you see what was suggested.</li>
+            <li>Values must come from each system's pick-lists and the site's location list.</li>
+            <li>Names and numbers must appear inside their own quote.</li>
+            <li>Severity, recordability, regulator reporting and priority are left for a person.</li>
+            <li>Behavior observations and training assignments never carry a worker's name.</li>
+            <li>Health details belong in restricted fields; anywhere else they are flagged.</li>
+            <li>Judging wording such as “careless” is flagged for a neutral rewrite.</li>
+            <li>A keyword rule backs up the AI on serious-injury precursors.</li>
+            <li>A scan of the raw capture raises an immediate alert for words like ambulance or hospital, even if the AI missed it.</li>
+            <li>Sentences that did not reach any step are underlined, so nothing drops out silently.</li>
+          </ul>
+        </div>
+        <div>
+          <h2 class="sec">What is real and what is mocked</h2>
+          <div class="real" style="margin-top:8px">
+            <div class="card"><b>Real</b><p class="note" style="margin-top:4px">The checks, the plan ordering, linking and retries, and the review flow run live. Inside Claude, the AI reads your own notes, photos and video frames.</p></div>
+            <div class="card"><b>Mocked</b><p class="note" style="margin-top:4px">The five systems are simulated in your browser. Outside Claude, the AI part of each demo scenario is a recorded result, replayed. Video sound is not transcribed yet.</p></div>
+          </div>
+        </div>
+        <div>
+          <h2 class="sec">Privacy</h2>
+          <p>In demo mode nothing leaves your browser. In live mode inside Claude, the capture goes to Claude on your own account. Records in the mock systems stay in this browser. Please use made-up details.</p>
+        </div>
+        <div id="about-links" class="row"></div>
+        <p class="note">Independent concept prototype by <span id="about-by"></span>. Not affiliated with any EHS software vendor. All names, companies and events are fictional.</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="dock gut" id="dock" hidden><div class="col"><div class="info" id="dock-info"></div><button type="button" class="btn small" id="approve-ready">Approve ready</button><button type="button" class="btn primary small" id="send">Send</button></div></div>
+
+<nav class="nav gut" aria-label="Main">
+  <div class="col">
+    <button type="button" data-tab="capture" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Capture</button>
+    <button type="button" data-tab="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg>Plan<span class="badge" id="plan-badge" hidden></span></button>
+    <button type="button" data-tab="systems"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg>Systems</button>
+    <button type="button" data-tab="activity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg>Activity</button>
+    <button type="button" data-tab="about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg>About</button>
+  </div>
+</nav>
+
+<div class="sheet-bg" id="fb" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="fb-h">
+    <div class="sec-h"><h2 id="fb-h">Feedback</h2><button type="button" class="icon-btn" id="fb-close">Close</button></div>
+    <p class="note">Thank you for trying Walkdown. Three quick questions.</p>
+    <div><label class="lbl" for="fb-role">Your role</label><select id="fb-role" class="ctl"><option>Safety technician or specialist</option><option>EHS manager or director</option><option>Operations or maintenance</option><option>EHS software or product</option><option>Other</option></select></div>
+    <div><span class="lbl" id="fb-rate-l" style="font-weight:700;font-size:14px">How useful would this be in your work?</span><div class="rate" id="fb-rate" role="group" aria-labelledby="fb-rate-l"></div><p class="note" style="margin-top:4px">1 not useful · 5 would use it every day</p></div>
+    <div><label class="lbl" for="fb-text">What would make it more useful, or what did it get wrong?</label><textarea id="fb-text" class="ctl" rows="4"></textarea></div>
+    <p id="fb-err" class="fnote" role="alert"></p>
+    <div id="fb-out" class="row" hidden></div>
+    <button type="button" class="btn primary block" id="fb-send">Prepare my feedback</button>
+  </div>
+</div>
+<div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
+
+<script>/*DATA*/</script>
+<script>/*ENGINE*/</script>
+<script>/*UI*/</script>

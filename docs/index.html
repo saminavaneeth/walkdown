@@ -1,0 +1,1983 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#EDF1EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F1513" media="(prefers-color-scheme: dark)">
+<title>Walkdown</title>
+<meta name="description" content="Concept prototype: turn a safety professional's voice notes, photos, video and documents into linked records across existing EHS systems.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a phone-first app shell. Header on top, one column of content, tab bar fixed to the bottom. Field notes are ruled like a field book and evidence is marked with a highlighter; each connected system has its own code badge. */
+:root{
+  --bg:#EDF1EF; --surface:#FFFFFF; --sunk:#F4F7F5; --ink:#17201D; --muted:#56635E; --line:#D2DAD6; --rule:#D9E4EA;
+  --marker:#FFE14F; --marker-soft:#FFF2A8; --marker-ink:#15140B;
+  --accent:#1B5DAB; --accent-soft:#E2EBF7;
+  --danger:#B42229; --danger-soft:#FBE6E6;
+  --warn:#A9500F; --warn-soft:#FCEBDC;
+  --ok:#14744A; --ok-soft:#DFF1E7;
+  --private:#5C4495; --private-soft:#ECE6F7;
+  --btn:#17201D; --btn-ink:#FFFFFF;
+  --s-ehs:#1B5DAB; --s-cmms:#9A4A0B; --s-ptw:#6B3FA0; --s-lms:#0F6E56; --s-alerts:#B42229;
+  --f-display:"Barlow Condensed","Arial Narrow","Roboto Condensed",sans-serif;
+  --f-body:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --r:8px; --nav-h:62px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1513; --surface:#171F1C; --sunk:#131A17; --ink:#E2E9E5; --muted:#9AA8A2; --line:#2B3632; --rule:#22302E;
+    --marker:#F2CF2B; --marker-soft:rgba(255,212,30,.24); --marker-ink:#15140B;
+    --accent:#86B3F0; --accent-soft:#1B2A3F;
+    --danger:#F28B8F; --danger-soft:#3A1B1D;
+    --warn:#F1A66C; --warn-soft:#3A2717;
+    --ok:#73D3A2; --ok-soft:#14301F;
+    --private:#BBA6EF; --private-soft:#2A2340;
+    --btn:#E2E9E5; --btn-ink:#0F1513;
+    --s-ehs:#86B3F0; --s-cmms:#F1A66C; --s-ptw:#BBA6EF; --s-lms:#6FD3B4; --s-alerts:#F28B8F;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1513; --surface:#171F1C; --sunk:#131A17; --ink:#E2E9E5; --muted:#9AA8A2; --line:#2B3632; --rule:#22302E;
+  --marker:#F2CF2B; --marker-soft:rgba(255,212,30,.24); --marker-ink:#15140B;
+  --accent:#86B3F0; --accent-soft:#1B2A3F;
+  --danger:#F28B8F; --danger-soft:#3A1B1D;
+  --warn:#F1A66C; --warn-soft:#3A2717;
+  --ok:#73D3A2; --ok-soft:#14301F;
+  --private:#BBA6EF; --private-soft:#2A2340;
+  --btn:#E2E9E5; --btn-ink:#0F1513;
+  --s-ehs:#86B3F0; --s-cmms:#F1A66C; --s-ptw:#BBA6EF; --s-lms:#6FD3B4; --s-alerts:#F28B8F;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);-webkit-font-smoothing:antialiased;margin:0}
+h1,h2,h3{text-wrap:balance;margin:0}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.col{max-width:760px;margin:0 auto}
+
+/* Header */
+.top{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.top-in{display:flex;align-items:center;gap:10px;padding-block:10px}
+.tape{width:24px;height:24px;border-radius:4px;flex:none;background:repeating-linear-gradient(-45deg,var(--marker) 0 5px,var(--ink) 5px 10px)}
+.brand{flex:1;min-width:0}
+.brand h1{font:700 23px/1 var(--f-display);letter-spacing:.02em}
+.brand p{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mode{font:600 12px/1 var(--f-display);letter-spacing:.07em;text-transform:uppercase;padding:6px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.mode.live{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.icon-btn{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:7px 10px;font:700 13px/1 var(--f-body);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+
+/* Main */
+main{padding-block:16px calc(var(--nav-h) + 96px + env(safe-area-inset-bottom,0px))}
+.view{display:grid;gap:16px}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+h2.sec{font:700 19px/1.15 var(--f-display);letter-spacing:.06em;text-transform:uppercase}
+.eyebrow{font:600 12.5px/1.2 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.note{font-size:13.5px;color:var(--muted);line-height:1.45}
+.muted{color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;font:700 14px/1 var(--f-body);padding:11px 14px;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;white-space:nowrap;min-height:42px}
+.btn:hover:not(:disabled){border-color:var(--muted)}
+.btn.primary{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}
+.btn.ok{background:var(--ok);color:var(--surface);border-color:var(--ok)}
+.btn.danger{background:var(--danger);color:var(--surface);border-color:var(--danger)}
+.btn.small{padding:7px 10px;font-size:13px;min-height:34px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.link{appearance:none;background:none;border:0;color:var(--accent);cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px;font-size:inherit;text-align:left}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font:600 12px/1 var(--f-display);letter-spacing:.05em;text-transform:uppercase;padding:4px 7px 3px;border-radius:3px;white-space:nowrap;display:inline-block}
+.k-danger{background:var(--danger-soft);color:var(--danger)} .k-warn{background:var(--warn-soft);color:var(--warn)} .k-accent{background:var(--accent-soft);color:var(--accent)} .k-private{background:var(--private-soft);color:var(--private)} .k-ok{background:var(--ok-soft);color:var(--ok)} .k-plain{background:var(--sunk);color:var(--muted)}
+.sys{font:500 11.5px/1 var(--f-mono);letter-spacing:.03em;padding:4px 6px;border-radius:3px;border:1.5px solid currentColor;white-space:nowrap;display:inline-block}
+.sys-ehs{color:var(--s-ehs)} .sys-cmms{color:var(--s-cmms)} .sys-ptw{color:var(--s-ptw)} .sys-lms{color:var(--s-lms)} .sys-alerts{color:var(--s-alerts)}
+
+/* Capture */
+.intro{display:grid;gap:6px}
+.intro p.lead{font-size:16px;line-height:1.5}
+.scen{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:10px}
+.scen button{appearance:none;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;cursor:pointer;display:grid;gap:6px;align-content:start}
+.scen button:hover{border-color:var(--muted)}
+.scen button[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.scen b{font:700 16px/1.25 var(--f-body)}
+.scen .inputs{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12.5px;color:var(--muted)}
+.composer{display:grid;gap:12px}
+.voice{display:flex;align-items:center;gap:10px;background:var(--sunk);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;font-size:13.5px}
+.voice .wave{flex:1;height:18px;background:repeating-linear-gradient(90deg,var(--muted) 0 2px,transparent 2px 5px);opacity:.35;border-radius:2px;min-width:40px}
+.paper{display:block;width:100%;margin:0;background-color:var(--surface);background-image:linear-gradient(to bottom,transparent 27px,var(--rule) 27px);background-size:100% 28px;background-position:0 12px;background-attachment:local;border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;font:16px/28px var(--f-body);color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
+textarea.paper{resize:vertical;min-height:196px}
+.media{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px}
+.tile{position:relative;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--sunk);aspect-ratio:1/1;max-width:100%;display:grid;align-content:end}
+.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tile .ph{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted)}
+.tile .ph svg{width:34px;height:34px}
+.tile .cap{position:relative;background:linear-gradient(transparent,rgba(0,0,0,.62));color:#fff;padding:18px 7px 6px;font-size:11.5px;line-height:1.25}
+.tile .cap b{display:block;font:500 11px/1.2 var(--f-mono)}
+.tile .rm{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:var(--ink);color:var(--surface);cursor:pointer;font-size:15px;line-height:26px;padding:0}
+.tile .demo-tag{position:absolute;top:5px;left:5px;font:500 10.5px/1 var(--f-mono);background:var(--surface);color:var(--muted);padding:3px 4px;border-radius:3px}
+.adds{display:flex;flex-wrap:wrap;gap:8px}
+.file-btn{position:relative;overflow:hidden}
+.file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+.warnbox{border:1px dashed var(--warn);background:var(--warn-soft);border-radius:var(--r);padding:10px 12px;font-size:13.5px}
+.stages{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.stages li{display:flex;gap:10px;align-items:center;font-size:14.5px;color:var(--muted)}
+.stages li .dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center;font-size:11px}
+.stages li.active{color:var(--ink);font-weight:700}
+.stages li.active .dot{border-color:var(--ink);border-top-color:transparent;animation:spin .9s linear infinite}
+.stages li.done{color:var(--ink)}
+.stages li.done .dot{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Plan */
+.alert{border:1.5px solid var(--danger);background:var(--danger-soft);border-radius:var(--r);padding:12px 14px;display:grid;gap:8px}
+.alert h3{font:700 17px/1.2 var(--f-display);letter-spacing:.05em;text-transform:uppercase;color:var(--danger)}
+.alert p{font-size:14px}
+.summary{display:grid;gap:10px}
+.summary h2{font:700 24px/1.15 var(--f-display);letter-spacing:.02em}
+.stats{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13.5px;color:var(--muted)}
+.stats b{color:var(--ink);font-variant-numeric:tabular-nums}
+.recbadge{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.recbadge b{font:600 11.5px/1 var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);border:1px solid var(--line);padding:4px 6px;border-radius:3px;background:var(--surface)}
+details.captured{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+details.captured>summary{cursor:pointer;font:600 14px/1.2 var(--f-display);letter-spacing:.07em;text-transform:uppercase}
+details.captured[open]>summary{margin-bottom:10px}
+.sources{display:grid;gap:10px}
+.src-label{font:600 12px/1.2 var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+mark.ev{background:var(--marker-soft);color:inherit;border-radius:2px;padding:1px 0;-webkit-box-decoration-break:clone;box-decoration-break:clone;cursor:pointer}
+mark.ev.on{background:var(--marker);color:var(--marker-ink)}
+.gap{text-decoration:underline dotted var(--danger) 2px;text-underline-offset:6px}
+.skip{color:var(--muted);text-decoration:underline dashed var(--muted) 1px;text-underline-offset:6px}
+.fast{box-shadow:inset 0 -3px 0 var(--danger);font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.sw{display:inline-block;width:18px;height:11px;border-radius:2px}
+.sw.ev{background:var(--marker-soft);box-shadow:inset 0 0 0 1px var(--marker)} .sw.gap{height:0;border-bottom:2px dotted var(--danger)} .sw.skip{height:0;border-bottom:1px dashed var(--muted)} .sw.fast{height:0;border-bottom:3px solid var(--danger)}
+.event{display:grid;gap:10px}
+.event-h{display:flex;gap:8px;align-items:baseline;padding-top:4px}
+.event-h p{font:600 15px/1.3 var(--f-display);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:10px;transition:border-color .15s}
+.step.hl{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.step.st-approved{border-color:var(--accent)}
+.step.ex-sent{border-color:var(--ok)}
+.step.st-skipped{opacity:.55}
+.shead{display:flex;gap:10px;align-items:flex-start}
+.num{font:700 20px/1 var(--f-display);color:var(--muted);min-width:1.2em;text-align:right;padding-top:2px;font-variant-numeric:tabular-nums}
+.stitle{flex:1;min-width:0;display:grid;gap:3px}
+.verb{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font:600 12.5px/1.2 var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.stitle h3{font:700 16.5px/1.3 var(--f-body)}
+.pill{font:600 11.5px/1 var(--f-display);letter-spacing:.07em;text-transform:uppercase;padding:5px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;flex:none}
+.pill.approved{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.pill.sent{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.pill.queued,.pill.waiting{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.pill.failed{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.flags{display:grid;gap:5px;margin:0;padding:0;list-style:none}
+.flag{display:flex;gap:8px;align-items:baseline;font-size:13.5px;line-height:1.4;flex-wrap:wrap}
+.flag .ft{flex:1;min-width:11rem}
+.by{font:500 10.5px/1 var(--f-mono);color:var(--muted)}
+details.fw>summary{cursor:pointer;font-size:13.5px;color:var(--accent);list-style:none}
+details.fw>summary::-webkit-details-marker{display:none}
+details.fw>summary::before{content:"▸ ";color:var(--muted)}
+details.fw[open]>summary::before{content:"▾ "}
+.fields{display:grid;gap:10px;margin-top:10px}
+.frow{display:grid;grid-template-columns:minmax(0,1fr);gap:4px}
+@media (min-width:560px){.frow{grid-template-columns:9.5rem minmax(0,1fr);gap:12px}}
+.flabel{font-size:13px;color:var(--muted);padding-top:6px;display:flex;flex-wrap:wrap;gap:4px 6px;align-items:baseline}
+.req{color:var(--danger);font-weight:700}
+.fval{display:grid;gap:5px;min-width:0;justify-items:start}
+.ctl{width:100%;font:15px/1.4 var(--f-body);background:var(--sunk);border:1px solid var(--line);border-radius:5px;padding:7px 8px;min-width:0}
+textarea.ctl{resize:vertical}
+.ctl:disabled{opacity:.85}
+.frow.missing .ctl{border-color:var(--danger);border-style:dashed}
+.frow.restricted .ctl{background:var(--private-soft);border-color:transparent}
+.linkval{font:500 13.5px/1.3 var(--f-mono);padding:6px 0;color:var(--muted)}
+.linkval.set{color:var(--ok)}
+.evq{appearance:none;text-align:left;font:13.5px/1.45 var(--f-body);background:var(--marker-soft);border:0;border-radius:3px;padding:2px 6px;cursor:pointer;max-width:100%}
+.evq:hover,.evq:focus-visible{background:var(--marker);color:var(--marker-ink)}
+.evq.approx{background:transparent;box-shadow:inset 0 0 0 1px var(--marker)}
+.evq.bad{background:transparent;color:var(--muted);text-decoration:line-through;cursor:default}
+.evsrc{font:500 10.5px/1 var(--f-mono);color:var(--muted)}
+.fnote{font-size:12.5px;color:var(--danger);line-height:1.4}
+.fnote.decide{color:var(--accent)} .fnote.soft{color:var(--warn)} .fnote s{color:var(--muted)}
+.pol{font:600 10.5px/1 var(--f-display);letter-spacing:.05em;text-transform:uppercase;padding:3px 5px 2px;border-radius:3px;white-space:nowrap}
+.pol-decide{background:var(--accent-soft);color:var(--accent)} .pol-priv{background:var(--private-soft);color:var(--private)}
+.edited{font:500 10.5px/1 var(--f-mono);color:var(--accent)}
+.deps{font-size:13px;color:var(--muted)}
+.qs{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.qh{font:600 12px/1.2 var(--f-display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.q label{font-size:14px;display:block;margin-bottom:4px}
+.result{border-radius:6px;padding:9px 10px;font-size:13.5px;display:grid;gap:4px}
+.result.sent{background:var(--ok-soft)} .result.queued,.result.waiting{background:var(--warn-soft)} .result.failed{background:var(--danger-soft)} .result.sending{background:var(--sunk)}
+.result .rid{font:500 14px/1.2 var(--f-mono)}
+.sfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px}
+.ready{font-size:13px;color:var(--muted)} .ready.yes{color:var(--ok)}
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.inject{border:1px solid var(--accent);background:var(--accent-soft);border-radius:var(--r);padding:10px 12px;font-size:14px;display:grid;gap:6px}
+.inject ul{margin:0;padding-left:18px;display:grid;gap:3px}
+.dock{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px));z-index:9;background:var(--bg);border-top:1px solid var(--line);padding-block:10px}
+.dock .col{display:flex;gap:10px;align-items:center}
+.dock .info{flex:1;min-width:0;font-size:13px;color:var(--muted)}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:var(--r);padding:22px 18px;display:grid;gap:10px}
+.empty h3{font:700 18px/1.2 var(--f-display);letter-spacing:.05em;text-transform:uppercase}
+
+/* Systems */
+.sysgrid{display:grid;gap:12px}
+.syscard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:10px}
+.syshead{display:flex;gap:10px;align-items:center}
+.syshead h3{font:700 16px/1.2 var(--f-body);flex:1;min-width:0}
+.syshead .note{display:block;font-weight:400}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;user-select:none;white-space:nowrap}
+.toggle input{position:absolute;opacity:0;width:1px;height:1px}
+.toggle .tr{width:36px;height:20px;border-radius:10px;background:var(--ok);position:relative;transition:background .2s;flex:none}
+.toggle .tr::after{content:"";position:absolute;top:2px;left:18px;width:16px;height:16px;border-radius:50%;background:var(--surface);transition:left .2s}
+.toggle input:not(:checked)+.tr{background:var(--danger)}
+.toggle input:not(:checked)+.tr::after{left:2px}
+.toggle input:focus-visible+.tr{outline:2px solid var(--accent);outline-offset:2px}
+.recs{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.rec{border-top:1px solid var(--line);padding-top:8px;display:grid;gap:3px}
+.rec .rid{font:500 13.5px/1.2 var(--f-mono)}
+.rec .rt{font-weight:700}
+.rec .rv{font-size:13px;color:var(--muted)}
+.rec .lk{display:flex;flex-wrap:wrap;gap:6px;font:500 12px/1.2 var(--f-mono)}
+.rec .lk span{background:var(--sunk);border-radius:3px;padding:3px 5px}
+.permits{font-size:13px;display:grid;gap:6px}
+
+/* Activity */
+.log{display:grid;gap:0;margin:0;padding:0;list-style:none}
+.log li{display:grid;grid-template-columns:4.2rem minmax(0,1fr);gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.log time{font:500 12px/1.4 var(--f-mono);color:var(--muted)}
+
+/* About */
+.about{display:grid;gap:22px;max-width:68ch}
+.about .lead{font-size:17px;line-height:1.55}
+.about p{line-height:1.6}
+.about ul{margin:6px 0 0;padding-left:20px;display:grid;gap:5px;line-height:1.5}
+.steps-list{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px;counter-reset:s}
+.steps-list li{display:grid;grid-template-columns:1.8rem minmax(0,1fr);gap:8px;align-items:baseline;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:9px 12px;counter-increment:s}
+.steps-list li::before{content:counter(s);font:700 20px/1 var(--f-display);color:var(--muted)}
+.steps-list b{display:block;font:700 14.5px/1.3 var(--f-display);letter-spacing:.06em;text-transform:uppercase}
+.real{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px}
+
+/* Nav */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav .col{display:grid;grid-template-columns:repeat(5,1fr);height:var(--nav-h)}
+.nav button{appearance:none;background:none;border:0;cursor:pointer;display:grid;justify-items:center;align-content:center;gap:3px;color:var(--muted);font:600 11.5px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;position:relative}
+.nav button svg{width:22px;height:22px}
+.nav button[aria-current="page"]{color:var(--ink)}
+.nav button[aria-current="page"]::before{content:"";position:absolute;top:0;left:22%;right:22%;height:3px;background:var(--ink);border-radius:0 0 3px 3px}
+.nav .badge{position:absolute;top:7px;left:calc(50% + 6px);min-width:17px;height:17px;border-radius:9px;background:var(--danger);color:var(--surface);font:700 10.5px/17px var(--f-body);padding:0 4px;letter-spacing:0}
+
+/* Sheet */
+.sheet-bg{position:fixed;inset:0;z-index:30;background:rgba(10,14,12,.55);display:grid;align-items:end;justify-items:center}
+.sheet{width:100%;max-width:560px;max-height:88vh;overflow:auto;background:var(--surface);border-radius:14px 14px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:grid;gap:14px}
+@media (min-width:600px){.sheet-bg{align-items:center}.sheet{border-radius:14px}}
+.sheet h2{font:700 21px/1.15 var(--f-display);letter-spacing:.04em;text-transform:uppercase}
+.sheet label.lbl{font-size:14px;font-weight:700;display:block;margin-bottom:6px}
+.rate{display:flex;gap:6px}
+.rate button{appearance:none;flex:1;min-height:42px;border:1px solid var(--line);background:var(--sunk);border-radius:var(--r);font:700 16px/1 var(--f-body);cursor:pointer}
+.rate button[aria-pressed="true"]{background:var(--btn);color:var(--btn-ink);border-color:var(--btn)}
+.toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 76px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--btn);color:var(--btn-ink);padding:10px 14px;border-radius:var(--r);font-size:14px;z-index:40;max-width:calc(100% - 32px);text-align:center}
+.file-btn.is-off{opacity:.45;cursor:not-allowed}
+.file-btn.is-off input{cursor:not-allowed}
+.errline{color:var(--danger);font-weight:700}
+.src-thumbs{display:flex;gap:6px;margin-bottom:6px}
+.src-thumbs img{height:72px;width:auto;border-radius:5px;border:1px solid var(--line)}
+.inject li.miss{color:var(--danger)}
+.inject .mk{font:500 12px/1 var(--f-mono);margin-right:4px}
+.alert .result{background:var(--surface)}
+.leftout{margin:10px 0 0;padding-left:18px;display:grid;gap:4px;font-size:13.5px}
+.kv{display:flex;flex-wrap:wrap;gap:4px 10px}
+.fbtext{width:100%;min-height:120px;font:13px/1.45 var(--f-mono)}
+.flash{animation:flash 1.2s ease-out}
+@keyframes flash{0%{box-shadow:0 0 0 4px var(--marker)}100%{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion: reduce){.stages li.active .dot{animation:none;border-top-color:var(--ink)}.flash{animation:none;outline:2px solid var(--marker)}.step,.toggle .tr,.toggle .tr::after{transition:none}}
+</style>
+<meta property="og:title" content="Walkdown: field capture to linked EHS records">
+<meta property="og:description" content="Describe what you saw on a floor walk by voice, photo, video or notes. Walkdown plans the linked records across your EHS, maintenance, permit, training and alert systems, with checks and human approval.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://saminavaneeth.github.io/walkdown/">
+</head>
+<body>
+<header class="top gut">
+  <div class="col top-in">
+    <span class="tape" aria-hidden="true"></span>
+    <div class="brand"><h1>Walkdown</h1><p>Field capture to linked EHS records</p></div>
+    <span id="mode" class="mode">Checking…</span>
+    <button type="button" class="icon-btn" id="fb-open">Feedback</button>
+  </div>
+</header>
+
+<main class="gut">
+  <div class="col">
+    <!-- CAPTURE -->
+    <section id="v-capture" class="view" aria-labelledby="h-capture">
+      <div class="intro">
+        <h2 class="sec" id="h-capture">New capture</h2>
+        <p class="lead">Describe what you saw the way you would tell a colleague. Walkdown turns it into a plan of linked records across your EHS, maintenance, permit, training and alert systems. Nothing is sent until you approve it.</p>
+      </div>
+      <div>
+        <div class="sec-h"><span class="eyebrow">Try a demo scenario</span></div>
+        <div class="scen" id="scen" style="margin-top:8px"></div>
+      </div>
+      <div class="card composer" id="composer">
+        <div class="sec-h"><span class="eyebrow" id="comp-title">Your capture</span><button type="button" class="link" id="clear-draft">Clear</button></div>
+        <div id="voice" class="voice" hidden></div>
+        <label class="note" for="cap-text" id="cap-hint">Type, or tap the box and use your keyboard's microphone key to dictate.</label>
+        <textarea id="cap-text" class="paper" placeholder="Example: Walked line 3. Guard on press 7 is missing a bolt, Mike in maintenance will fix it by end of shift…"></textarea>
+        <div id="media" class="media"></div>
+        <div class="adds" id="adds">
+          <label class="btn small file-btn" id="add-photo-l">Add photo<input type="file" id="add-photo" accept="image/jpeg,image/png,image/webp" multiple></label>
+          <label class="btn small file-btn" id="add-video-l">Add video<input type="file" id="add-video" accept="video/*"></label>
+          <label class="btn small file-btn" id="add-doc-l">Add document photo<input type="file" id="add-doc" accept="image/jpeg,image/png,image/webp"></label>
+        </div>
+        <p class="note" id="media-note"></p>
+        <p class="warnbox">Use made-up details. Do not enter real names or real injury information.</p>
+        <div id="proc-msg" class="note" role="status" aria-live="polite"></div>
+        <button type="button" id="process" class="btn primary block">Build the plan</button>
+        <div id="stages-wrap" class="card" hidden><ul id="stages" class="stages"></ul><div class="row" style="margin-top:10px"><button type="button" class="btn small" id="stop" hidden>Stop</button><span id="stage-note" class="note"></span></div></div>
+      </div>
+    </section>
+
+    <!-- PLAN -->
+    <section id="v-plan" class="view" aria-labelledby="h-plan" hidden>
+      <h2 class="sec" id="h-plan">Plan</h2>
+      <div id="plan"></div>
+    </section>
+
+    <!-- SYSTEMS -->
+    <section id="v-systems" class="view" aria-labelledby="h-systems" hidden>
+      <div class="sec-h"><h2 class="sec" id="h-systems">Connected systems</h2><button type="button" class="btn small" id="reset-sys">Reset all systems</button></div>
+      <p class="note">These are mock systems that run in your browser. Each has its own record types, pick-lists and IDs, rejects invalid values, and can be switched off to simulate an outage.</p>
+      <div id="systems" class="sysgrid"></div>
+    </section>
+
+    <!-- ACTIVITY -->
+    <section id="v-activity" class="view" aria-labelledby="h-activity" hidden>
+      <div class="sec-h"><h2 class="sec" id="h-activity">Activity</h2><button type="button" class="btn small" id="clear-log">Clear</button></div>
+      <p class="note">An audit trail of what the AI proposed, what you changed, and what each system received.</p>
+      <ul id="log" class="log"></ul>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="v-about" class="view" aria-labelledby="h-about" hidden>
+      <div class="about">
+        <h2 class="sec" id="h-about">About Walkdown</h2>
+        <p class="lead">A safety professional sees a dozen things on a floor walk. Today each one is typed into a different system hours later, and the near misses, at-risk behaviors and spoken promises are what get lost. Walkdown takes one capture, in any form, and turns it into the right linked records across the systems a site already uses.</p>
+        <div>
+          <h2 class="sec">How a capture becomes a plan</h2>
+          <ol class="steps-list">
+            <li><div><b>Capture</b>Notes typed or dictated, photos, short video and photos of documents such as permits.</div></li>
+            <li><div><b>Read the media</b>Video is sampled into frames. The AI writes down what each photo, frame and document shows, including any written text.</div></li>
+            <li><div><b>Understand and plan</b>The AI splits the capture into events and proposes steps in each system: records, work orders, permit checks, training and alerts, with links between them.</div></li>
+            <li><div><b>Check</b>Rules in the app test every value before you see it. The list is below.</div></li>
+            <li><div><b>Review</b>You answer follow-up questions, fix values and approve or skip each step. Immediate alerts can go first.</div></li>
+            <li><div><b>Send</b>Steps go out in order. Each system's new ID is written into the records that depend on it, failures queue and retry, and every action is logged.</div></li>
+          </ol>
+        </div>
+        <div>
+          <h2 class="sec">Checks on every plan</h2>
+          <ul>
+            <li>Every value must quote the capture. If the quote is not there, the value is removed and you see what was suggested.</li>
+            <li>Values must come from each system's pick-lists and the site's location list.</li>
+            <li>Names and numbers must appear inside their own quote.</li>
+            <li>Severity, recordability, regulator reporting and priority are left for a person.</li>
+            <li>Behavior observations and training assignments never carry a worker's name.</li>
+            <li>Health details belong in restricted fields; anywhere else they are flagged.</li>
+            <li>Judging wording such as “careless” is flagged for a neutral rewrite.</li>
+            <li>A keyword rule backs up the AI on serious-injury precursors.</li>
+            <li>A scan of the raw capture raises an immediate alert for words like ambulance or hospital, even if the AI missed it.</li>
+            <li>Sentences that did not reach any step are underlined, so nothing drops out silently.</li>
+          </ul>
+        </div>
+        <div>
+          <h2 class="sec">What is real and what is mocked</h2>
+          <div class="real" style="margin-top:8px">
+            <div class="card"><b>Real</b><p class="note" style="margin-top:4px">The checks, the plan ordering, linking and retries, and the review flow run live. Inside Claude, the AI reads your own notes, photos and video frames.</p></div>
+            <div class="card"><b>Mocked</b><p class="note" style="margin-top:4px">The five systems are simulated in your browser. Outside Claude, the AI part of each demo scenario is a recorded result, replayed. Video sound is not transcribed yet.</p></div>
+          </div>
+        </div>
+        <div>
+          <h2 class="sec">Privacy</h2>
+          <p>In demo mode nothing leaves your browser. In live mode inside Claude, the capture goes to Claude on your own account. Records in the mock systems stay in this browser. Please use made-up details.</p>
+        </div>
+        <div id="about-links" class="row"></div>
+        <p class="note">Independent concept prototype by <span id="about-by"></span>. Not affiliated with any EHS software vendor. All names, companies and events are fictional.</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div class="dock gut" id="dock" hidden><div class="col"><div class="info" id="dock-info"></div><button type="button" class="btn small" id="approve-ready">Approve ready</button><button type="button" class="btn primary small" id="send">Send</button></div></div>
+
+<nav class="nav gut" aria-label="Main">
+  <div class="col">
+    <button type="button" data-tab="capture" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Capture</button>
+    <button type="button" data-tab="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg>Plan<span class="badge" id="plan-badge" hidden></span></button>
+    <button type="button" data-tab="systems"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg>Systems</button>
+    <button type="button" data-tab="activity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg>Activity</button>
+    <button type="button" data-tab="about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg>About</button>
+  </div>
+</nav>
+
+<div class="sheet-bg" id="fb" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="fb-h">
+    <div class="sec-h"><h2 id="fb-h">Feedback</h2><button type="button" class="icon-btn" id="fb-close">Close</button></div>
+    <p class="note">Thank you for trying Walkdown. Three quick questions.</p>
+    <div><label class="lbl" for="fb-role">Your role</label><select id="fb-role" class="ctl"><option>Safety technician or specialist</option><option>EHS manager or director</option><option>Operations or maintenance</option><option>EHS software or product</option><option>Other</option></select></div>
+    <div><span class="lbl" id="fb-rate-l" style="font-weight:700;font-size:14px">How useful would this be in your work?</span><div class="rate" id="fb-rate" role="group" aria-labelledby="fb-rate-l"></div><p class="note" style="margin-top:4px">1 not useful · 5 would use it every day</p></div>
+    <div><label class="lbl" for="fb-text">What would make it more useful, or what did it get wrong?</label><textarea id="fb-text" class="ctl" rows="4"></textarea></div>
+    <p id="fb-err" class="fnote" role="alert"></p>
+    <div id="fb-out" class="row" hidden></div>
+    <button type="button" class="btn primary block" id="fb-send">Prepare my feedback</button>
+  </div>
+</div>
+<div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
+
+<script>
+/* Walkdown: site, mock systems and demo scenarios. Everything here is fictional. */
+"use strict";
+
+const SITE = {
+  name: "Plant 2 · Stamping and Assembly",
+  locations: ["Press Line 1","Press Line 2","Press Line 3","Press Line 4","Warehouse","Shipping Dock","Packing","Wash Station","MCC Room","Maintenance Shop","Tank Farm","Roof - Building B","Office / Admin"]
+};
+
+const COURSES = ["Forklift pedestrian safety refresher","Lockout/tagout refresher","HazCom labelling","Working at heights","Confined space entry","Machine guarding awareness"];
+const ALERT_ROLES = ["EHS manager","Plant manager","Contractor coordinator","Maintenance supervisor","Area supervisor"];
+
+/* Field kinds: text, enum, location, person, number, link (filled from another step when it is sent). */
+const SYSTEMS = [
+  {id:"ehs", name:"EHS platform", code:"EHS", about:"Concerns, incidents, findings, observations, actions and meetings.", objects:{
+    concern:{label:"Safety concern", verb:"Create", prefix:"CON", fields:[
+      {key:"concern_type", label:"Concern type", kind:"enum", options:["Near miss","Unsafe condition","Unsafe act","Environmental concern"], required:true},
+      {key:"location", label:"Location", kind:"location", required:true},
+      {key:"description", label:"What was seen", kind:"text", required:true},
+      {key:"immediate_action", label:"Immediate action", kind:"text"},
+      {key:"potential_severity", label:"Potential severity", kind:"enum", options:["Low","Medium","High","Potentially serious (SIF)"], policy:"person_decides"}]},
+    incident:{label:"Incident", verb:"Create", prefix:"INC", fields:[
+      {key:"incident_type", label:"Incident type", kind:"enum", options:["Injury or illness","Property damage","Environmental release","Vehicle"], required:true},
+      {key:"date_time", label:"Date and time", kind:"text", required:true},
+      {key:"location", label:"Location", kind:"location", required:true},
+      {key:"description", label:"What happened", kind:"text", required:true},
+      {key:"immediate_actions", label:"Immediate actions", kind:"text"},
+      {key:"injured_person", label:"Injured person", kind:"person", policy:"restricted"},
+      {key:"injury_details", label:"Injury and body part", kind:"text", policy:"restricted"},
+      {key:"treatment", label:"Treatment given", kind:"text", policy:"restricted"},
+      {key:"recordability", label:"Recordability", kind:"enum", options:["First aid only","Recordable","Lost time"], policy:"person_decides"},
+      {key:"regulator_report", label:"Report to regulator", kind:"enum", options:["Not required","Required"], policy:"person_decides"}]},
+    finding:{label:"Inspection finding", verb:"Create", prefix:"FND", fields:[
+      {key:"location", label:"Location", kind:"location", required:true},
+      {key:"equipment", label:"Equipment or item", kind:"text"},
+      {key:"finding", label:"Finding", kind:"text", required:true},
+      {key:"status", label:"Status", kind:"enum", options:["Open","Corrected on the spot"], required:true}]},
+    observation:{label:"Behavior observation", verb:"Create", prefix:"OBS", noNames:true, fields:[
+      {key:"observation", label:"Observation", kind:"enum", options:["Safe","At-risk"], required:true},
+      {key:"category", label:"Category", kind:"enum", options:["PPE","Body position","Line of fire","Vehicles and mobile equipment","Tools and equipment","Housekeeping","Procedure or permit"], required:true},
+      {key:"location", label:"Location", kind:"location", required:true},
+      {key:"description", label:"What was observed", kind:"text", required:true},
+      {key:"feedback_given", label:"Feedback given", kind:"enum", options:["Yes","No"]}]},
+    action:{label:"Corrective action", verb:"Create", prefix:"ACT", fields:[
+      {key:"description", label:"Action", kind:"text", required:true},
+      {key:"owner", label:"Owner", kind:"person", required:true},
+      {key:"due", label:"Due", kind:"text", required:true},
+      {key:"priority", label:"Priority", kind:"enum", options:["Low","Medium","High"], policy:"person_decides"},
+      {key:"work_order", label:"Work order", kind:"link"},
+      {key:"related_record", label:"Related record", kind:"link"}]},
+    meeting:{label:"Safety meeting", verb:"Create", prefix:"MTG", fields:[
+      {key:"meeting_type", label:"Meeting type", kind:"enum", options:["Toolbox talk","JHSC meeting","Safety meeting"], required:true},
+      {key:"status", label:"Status", kind:"enum", options:["Held","Scheduled"], required:true},
+      {key:"topic", label:"Topic", kind:"text", required:true},
+      {key:"group", label:"Crew or group", kind:"text"},
+      {key:"date", label:"Date", kind:"text"},
+      {key:"attendee_count", label:"Attendees", kind:"number"},
+      {key:"attendees", label:"Attendance list", kind:"text"}]},
+    contractor_obs:{label:"Contractor observation", verb:"Create", prefix:"CTR", fields:[
+      {key:"contractor", label:"Contractor", kind:"text", required:true},
+      {key:"location", label:"Location", kind:"location", required:true},
+      {key:"work_activity", label:"Work activity", kind:"text"},
+      {key:"finding", label:"Finding", kind:"text", required:true},
+      {key:"stop_work", label:"Work stopped", kind:"enum", options:["Yes","No"]},
+      {key:"outcome", label:"Outcome", kind:"text"},
+      {key:"permit_ref", label:"Permit", kind:"link"}]}
+  }},
+  {id:"cmms", name:"Maintenance (CMMS)", code:"CMMS", about:"Work orders for the maintenance team.", objects:{
+    work_order:{label:"Work order", verb:"Create", prefix:"WO", fields:[
+      {key:"asset", label:"Asset", kind:"text", required:true},
+      {key:"location", label:"Location", kind:"location", required:true},
+      {key:"problem", label:"Problem", kind:"text", required:true},
+      {key:"work_type", label:"Work type", kind:"enum", options:["Safety","Corrective","Inspection"], required:true},
+      {key:"assigned_to", label:"Assigned to", kind:"person"},
+      {key:"due", label:"Due", kind:"text"},
+      {key:"priority", label:"Priority", kind:"enum", options:["Emergency","High","Medium","Low"], policy:"person_decides"}]}
+  }},
+  {id:"ptw", name:"Permit to work", code:"PTW", about:"Active permits and contractor work authorizations.", objects:{
+    permit_check:{label:"Permit check", verb:"Check", action:"check", fields:[
+      {key:"contractor", label:"Contractor", kind:"text", required:true},
+      {key:"location", label:"Location", kind:"location"},
+      {key:"permit_number", label:"Permit number", kind:"text"}]}
+  }},
+  {id:"lms", name:"Training (LMS)", code:"LMS", about:"Course assignments for crews and roles.", objects:{
+    assignment:{label:"Training assignment", verb:"Assign", prefix:"ASG", noNames:true, fields:[
+      {key:"course", label:"Course", kind:"enum", options:COURSES, required:true},
+      {key:"audience", label:"Crew or role", kind:"text", required:true},
+      {key:"due", label:"Due", kind:"text"},
+      {key:"reason", label:"Reason", kind:"text"},
+      {key:"related_record", label:"Related record", kind:"link"}]}
+  }},
+  {id:"alerts", name:"Alerts", code:"ALR", about:"Messages to people who need to act.", objects:{
+    message:{label:"Alert", verb:"Send", prefix:"ALT", fields:[
+      {key:"to", label:"To", kind:"enum", options:ALERT_ROLES, required:true},
+      {key:"urgency", label:"Urgency", kind:"enum", options:["Immediate","Today","FYI"], required:true},
+      {key:"message", label:"Message", kind:"text", required:true},
+      {key:"related_record", label:"Related record", kind:"link"}]}
+  }}
+];
+
+/* Records that already exist in the mock permit system. */
+const PERMITS = [
+  {id:"PTW-2291", contractor:"XYZ Electrical", location:"MCC Room", work:"Panel upgrade on MCC-1", valid:"Oct 13 to Oct 15", conditions:["Personal lock and tag on every isolation point","Isolation point: main disconnect MCC-1"]},
+  {id:"PTW-2304", contractor:"Northline Roofing", location:"Roof - Building B", work:"Roof membrane repair", valid:"Oct 12 to Oct 16", conditions:["Guardrail at all open edges, or tie-off where a guardrail is not possible"]},
+  {id:"PTW-2310", contractor:"Atlas Rigging", location:"Press Line 4", work:"Die change lift", valid:"Oct 14", conditions:["Exclusion zone under the suspended load"]}
+];
+
+/* Demo scenarios. "recorded" is an AI plan written in advance for the demo; the checks, plan and mock systems all run live in the page. */
+const SCENARIOS = [
+  {id:"walk", title:"B-shift floor walk", blurb:"One walk, five systems: a loose guard, a near miss, a contractor lock and a toolbox talk.",
+   voice:{duration:"0:52"},
+   text:"Tuesday, B-shift walk. Did the toolbox talk with B-shift press line, fourteen people, topic was pinch points at the feed tables. On line 3 the guard on press 7 is missing a bolt on the right side panel. Told Mike in maintenance, he'll fix it by end of shift. In the warehouse a forklift backed out of aisle 6 without the horn and a pedestrian had to step back, maybe a metre away. Nobody hurt. I want the warehouse drivers to get the pedestrian safety refresher this week. XYZ Electrical is in the MCC room, permit's posted but their lock on the main disconnect isn't tagged. Let the contractor coordinator know today.",
+   media:[
+     {id:"m1", kind:"photo", label:"Photo 1", caption:"Press 7 guard"},
+     {id:"m2", kind:"video", label:"Video 1", caption:"Aisle 6, 10 seconds", frames:5},
+     {id:"m3", kind:"document", label:"Document 1", caption:"Permit posted at the MCC room"},
+     {id:"m4", kind:"photo", label:"Photo 2", caption:"MCC-1 main disconnect"}
+   ],
+   recorded:{
+     media_notes:[
+       {media:"m1", text:"PRESS 7 stencilled on the frame. Seen: right side guard panel with an empty bolt hole at the top corner; the panel is still in place."},
+       {media:"m2", text:"AISLE 6 sign on the racking. Seen: a forklift reverses out of the aisle while a person in a hi-vis vest steps back at the aisle end. The frames cannot confirm whether the horn sounded."},
+       {media:"m3", text:"PERMIT TO WORK PTW-2291. Contractor: XYZ Electrical. Work: panel upgrade, MCC-1. Isolation point: main disconnect MCC-1. Valid Oct 13 to Oct 15."},
+       {media:"m4", text:"Seen: a red personal lock on the main disconnect handle with no tag attached."}
+     ],
+     events:[
+       {id:"e1", summary:"Toolbox talk with B-shift press line"},
+       {id:"e2", summary:"Missing bolt on the press 7 guard, fix promised by end of shift"},
+       {id:"e3", summary:"Forklift reversed out of aisle 6 close to a pedestrian"},
+       {id:"e4", summary:"Contractor lock on the MCC-1 main disconnect has no tag"}
+     ],
+     steps:[
+       {id:"s1", event:"e1", system:"ehs", object:"meeting", title:"Toolbox talk: pinch points at the feed tables", fields:{
+         meeting_type:{value:"Toolbox talk", evidence:"Did the toolbox talk with B-shift press line"},
+         status:{value:"Held", evidence:"Did the toolbox talk"},
+         topic:{value:"Pinch points at the feed tables", evidence:"topic was pinch points at the feed tables"},
+         group:{value:"B-shift press line", evidence:"toolbox talk with B-shift press line"},
+         date:{value:"Tuesday", evidence:"Tuesday, B-shift walk"},
+         attendee_count:{value:14, evidence:"fourteen people"},
+         attendees:{value:null, evidence:""}},
+        questions:["Can you add the sign-in sheet so attendance is recorded by name?"], flags:[], links:[]},
+       {id:"s2", event:"e2", system:"ehs", object:"finding", title:"Press 7 guard missing a bolt on the right side panel", fields:{
+         location:{value:"Press Line 3", evidence:"On line 3"},
+         equipment:{value:"Press 7, right side guard panel", evidence:"the guard on press 7 is missing a bolt on the right side panel"},
+         finding:{value:"The right side guard panel on press 7 is missing a bolt. The panel is still in place.", evidence:"the panel is still in place"},
+         status:{value:"Open", evidence:"he'll fix it by end of shift"}},
+        questions:["Did press 7 keep running until the bolt was replaced?"], flags:[], links:[]},
+       {id:"s3", event:"e2", system:"cmms", object:"work_order", title:"Replace missing bolt on the press 7 guard", fields:{
+         asset:{value:"Press 7", evidence:"the guard on press 7 is missing a bolt"},
+         location:{value:"Press Line 3", evidence:"On line 3"},
+         problem:{value:"The right side guard panel is missing a bolt. Replace the bolt.", evidence:"missing a bolt on the right side panel"},
+         work_type:{value:"Safety", evidence:"the guard on press 7 is missing a bolt"},
+         assigned_to:{value:"Mike (maintenance)", evidence:"Told Mike in maintenance"},
+         due:{value:"End of shift", evidence:"he'll fix it by end of shift"},
+         priority:{value:null, evidence:""}},
+        questions:[], flags:[], links:[]},
+       {id:"s4", event:"e2", system:"ehs", object:"action", title:"Fix the press 7 guard bolt", fields:{
+         description:{value:"Replace the missing bolt on the press 7 right side guard panel.", evidence:"the guard on press 7 is missing a bolt on the right side panel"},
+         owner:{value:"Mike (maintenance)", evidence:"Told Mike in maintenance"},
+         due:{value:"End of shift", evidence:"he'll fix it by end of shift"},
+         priority:{value:null, evidence:""}},
+        questions:["Who will check the guard after the fix?"], flags:[], links:[{field:"work_order", from:"s3"},{field:"related_record", from:"s2"}]},
+       {id:"s5", event:"e3", system:"ehs", object:"concern", title:"Forklift reversed out of aisle 6 without the horn", fields:{
+         concern_type:{value:"Near miss", evidence:"a pedestrian had to step back, maybe a metre away"},
+         location:{value:"Warehouse", evidence:"In the warehouse"},
+         description:{value:"A forklift reversed out of aisle 6 without sounding the horn. A pedestrian stepped back at about one metre. No injury.", evidence:"a forklift backed out of aisle 6 without the horn and a pedestrian had to step back, maybe a metre away"},
+         immediate_action:{value:null, evidence:""},
+         potential_severity:{value:null, evidence:""}},
+        questions:["Was anything done at the time, such as stopping the truck or talking with the driver?"],
+        flags:[{kind:"sif_precursor", note:"A pedestrian was within about a metre of a moving forklift.", evidence:"a pedestrian had to step back, maybe a metre away"},{kind:"decision_needed", note:"A person should rate the potential severity.", evidence:""}], links:[]},
+       {id:"s6", event:"e3", system:"lms", object:"assignment", title:"Pedestrian safety refresher for warehouse drivers", fields:{
+         course:{value:"Forklift pedestrian safety refresher", evidence:"the pedestrian safety refresher"},
+         audience:{value:"Warehouse drivers", evidence:"the warehouse drivers"},
+         due:{value:"This week", evidence:"this week"},
+         reason:{value:"Near miss: a forklift reversed out of aisle 6 close to a pedestrian.", evidence:"a pedestrian had to step back"}},
+        questions:[], flags:[], links:[{field:"related_record", from:"s5"}]},
+       {id:"s7", event:"e4", system:"ptw", object:"permit_check", title:"Check the XYZ Electrical permit", fields:{
+         contractor:{value:"XYZ Electrical", evidence:"XYZ Electrical is in the MCC room"},
+         location:{value:"MCC Room", evidence:"in the MCC room"},
+         permit_number:{value:"PTW-2291", evidence:"PERMIT TO WORK PTW-2291"}},
+        questions:[], flags:[], links:[]},
+       {id:"s8", event:"e4", system:"ehs", object:"contractor_obs", title:"Contractor lock on the MCC-1 main disconnect has no tag", fields:{
+         contractor:{value:"XYZ Electrical", evidence:"XYZ Electrical is in the MCC room"},
+         location:{value:"MCC Room", evidence:"in the MCC room"},
+         work_activity:{value:"Panel upgrade on MCC-1", evidence:"Work: panel upgrade, MCC-1"},
+         finding:{value:"The contractor's personal lock on the main disconnect has no tag.", evidence:"their lock on the main disconnect isn't tagged"},
+         stop_work:{value:null, evidence:""}},
+        questions:["Was the work paused until the lock was tagged?"],
+        flags:[{kind:"sif_precursor", note:"Hazardous energy control: an untagged lock weakens isolation checks.", evidence:"their lock on the main disconnect isn't tagged"}], links:[{field:"permit_ref", from:"s7"}]},
+       {id:"s9", event:"e4", system:"alerts", object:"message", title:"Tell the contractor coordinator about the untagged lock", fields:{
+         to:{value:"Contractor coordinator", evidence:"Let the contractor coordinator know today"},
+         urgency:{value:"Today", evidence:"know today"},
+         message:{value:"XYZ Electrical's lock on the MCC-1 main disconnect has no tag. Please follow up today.", evidence:"their lock on the main disconnect isn't tagged"}},
+        questions:[], flags:[], links:[{field:"related_record", from:"s8"}]}
+     ],
+     not_recorded:[{quote:"Nobody hurt.", reason:"Supports the near-miss classification."}],
+     people_mentioned:["Mike"]
+   }},
+  {id:"injury", title:"Hand caught at press 4", blurb:"A serious injury: the alert goes out first, people make the regulatory calls.",
+   voice:{duration:"0:34"},
+   text:"Thursday, about 10:40. Operator on line 2 caught his left hand between the die and the stripper plate clearing a jam on press 4. First aid at the station, then the ambulance took him to hospital. Raj, the supervisor, went with him. Press 4 is locked out and the area is taped off. Maintenance needs to check the light curtain before anyone restarts it.",
+   media:[{id:"m1", kind:"photo", label:"Photo 1", caption:"Press 4, taped off"}],
+   recorded:{
+     media_notes:[{media:"m1", text:"DO NOT OPERATE written on the tag. Seen: caution tape across the front of press 4; a lock and tag hang on the main disconnect."}],
+     events:[
+       {id:"e1", summary:"Operator's hand caught in press 4 while clearing a jam"},
+       {id:"e2", summary:"Light curtain check needed before press 4 restarts"}
+     ],
+     steps:[
+       {id:"s1", event:"e1", system:"alerts", object:"message", title:"Possible serious injury at press 4", fields:{
+         to:{value:"EHS manager", evidence:"the ambulance took him to hospital"},
+         urgency:{value:"Immediate", evidence:"the ambulance took him to hospital"},
+         message:{value:"Operator on line 2 caught a hand in press 4 while clearing a jam and went to hospital by ambulance. Press is locked out and the area is taped off.", evidence:"caught his left hand between the die and the stripper plate clearing a jam on press 4"}},
+        questions:[], flags:[{kind:"fast_lane", note:"Ambulance and hospital: send before the rest of the review.", evidence:"the ambulance took him to hospital"}], links:[]},
+       {id:"s2", event:"e1", system:"ehs", object:"incident", title:"Hand caught between die and stripper plate on press 4", fields:{
+         incident_type:{value:"Injury or illness", evidence:"caught his left hand between the die and the stripper plate"},
+         date_time:{value:"Thursday, about 10:40", evidence:"Thursday, about 10:40"},
+         location:{value:"Press Line 2", evidence:"Operator on line 2"},
+         description:{value:"While clearing a jam on press 4, an operator's hand was caught between the die and the stripper plate.", evidence:"clearing a jam on press 4"},
+         immediate_actions:{value:"Press 4 locked out and the area taped off.", evidence:"Press 4 is locked out and the area is taped off"},
+         injured_person:{value:null, evidence:""},
+         injury_details:{value:"Left hand caught between the die and the stripper plate", evidence:"caught his left hand between the die and the stripper plate"},
+         treatment:{value:"First aid at the station, then taken to hospital by ambulance", evidence:"First aid at the station, then the ambulance took him to hospital"},
+         recordability:{value:null, evidence:""},
+         regulator_report:{value:null, evidence:""}},
+        questions:["Was the press locked out before the jam was cleared?","Who is the injured worker? Add the name only in the restricted field."],
+        flags:[{kind:"sif_precursor", note:"Caught-in exposure at a press during jam clearing.", evidence:"clearing a jam on press 4"},{kind:"decision_needed", note:"A person must decide recordability and whether the regulator must be notified.", evidence:""}], links:[]},
+       {id:"s3", event:"e2", system:"cmms", object:"work_order", title:"Check the press 4 light curtain before restart", fields:{
+         asset:{value:"Press 4 light curtain", evidence:"check the light curtain"},
+         location:{value:"Press Line 2", evidence:"Operator on line 2"},
+         problem:{value:"Check the light curtain on press 4 before the press is restarted.", evidence:"Maintenance needs to check the light curtain before anyone restarts it"},
+         work_type:{value:"Safety", evidence:"check the light curtain before anyone restarts it"},
+         assigned_to:{value:"Maintenance", evidence:"Maintenance needs to check the light curtain"},
+         due:{value:"Before restart", evidence:"before anyone restarts it"},
+         priority:{value:null, evidence:""}},
+        questions:[], flags:[], links:[]},
+       {id:"s4", event:"e2", system:"ehs", object:"action", title:"Verify the light curtain before press 4 restarts", fields:{
+         description:{value:"Verify the press 4 light curtain works before the press is restarted.", evidence:"Maintenance needs to check the light curtain before anyone restarts it"},
+         owner:{value:"Maintenance", evidence:"Maintenance needs to check the light curtain"},
+         due:{value:"Before restart", evidence:"before anyone restarts it"},
+         priority:{value:null, evidence:""}},
+        questions:[], flags:[], links:[{field:"work_order", from:"s3"},{field:"related_record", from:"s2"}]}
+     ],
+     not_recorded:[{quote:"Raj, the supervisor, went with him.", reason:"Context for the incident; no separate record."}],
+     people_mentioned:["Raj"]
+   }},
+  {id:"roof", title:"Roof edge, Building B", blurb:"A contractor stop-work checked against the permit system.",
+   voice:null,
+   text:"Northline Roofing crew on the roof of building B. One worker near the west edge with no tie-off and no guardrail on that side. I stopped the job and called their supervisor. Work restarted after they put up the guardrail. Tell the contractor coordinator and check their permit covers edge work.",
+   media:[{id:"m1", kind:"photo", label:"Photo 1", caption:"West edge, Building B"}],
+   recorded:{
+     media_notes:[{media:"m1", text:"Seen: a worker about a metre from an unprotected roof edge, no harness visible. A section of temporary guardrail lies flat on the roof."}],
+     events:[{id:"e1", summary:"Roofing contractor at an open edge without fall protection; job stopped"}],
+     steps:[
+       {id:"s1", event:"e1", system:"ptw", object:"permit_check", title:"Check the Northline Roofing permit", fields:{
+         contractor:{value:"Northline Roofing", evidence:"Northline Roofing crew on the roof of building B"},
+         location:{value:"Roof - Building B", evidence:"on the roof of building B"},
+         permit_number:{value:null, evidence:""}},
+        questions:[], flags:[], links:[]},
+       {id:"s2", event:"e1", system:"ehs", object:"contractor_obs", title:"Worker at the west roof edge without fall protection", fields:{
+         contractor:{value:"Northline Roofing", evidence:"Northline Roofing crew on the roof of building B"},
+         location:{value:"Roof - Building B", evidence:"on the roof of building B"},
+         work_activity:{value:"Roofing work", evidence:"Northline Roofing crew on the roof"},
+         finding:{value:"A worker was near the west edge with no tie-off and no guardrail on that side.", evidence:"One worker near the west edge with no tie-off and no guardrail on that side"},
+         stop_work:{value:"Yes", evidence:"I stopped the job"},
+         outcome:{value:"Work restarted after the guardrail was put up.", evidence:"Work restarted after they put up the guardrail"}},
+        questions:[], flags:[{kind:"sif_precursor", note:"Work at an open roof edge without fall protection.", evidence:"near the west edge with no tie-off"}], links:[{field:"permit_ref", from:"s1"}]},
+       {id:"s3", event:"e1", system:"alerts", object:"message", title:"Tell the contractor coordinator about the roof edge stop", fields:{
+         to:{value:"Contractor coordinator", evidence:"Tell the contractor coordinator"},
+         urgency:{value:null, evidence:""},
+         message:{value:"A Northline Roofing worker was at the west edge of the building B roof with no tie-off or guardrail. The job was stopped and restarted after the guardrail went up.", evidence:"I stopped the job and called their supervisor"}},
+        questions:["How urgent is this for the contractor coordinator?"], flags:[], links:[{field:"related_record", from:"s2"}]}
+     ],
+     not_recorded:[],
+     people_mentioned:[]
+   }},
+  {id:"dock", title:"BBS cards at the dock", blurb:"Behavior cards with no names and no blame, plus a toolbox talk to schedule.",
+   voice:{duration:"0:41"},
+   text:"3 BBS cards at the shipping dock. Two loaders on dock 4 doing it right, gloves on and wheel chocks in before loading. Forklift driver Kevin, careless as usual, drove into a trailer on dock 3 without checking it was chocked. Gave him feedback on the spot. Housekeeping on dock 2 is bad, pallets and shrink wrap in the walkway. I'll schedule a toolbox talk on trailer chocking with the dock crew for Thursday.",
+   media:[{id:"m1", kind:"photo", label:"Photo 1", caption:"Dock 2 walkway"}],
+   recorded:{
+     media_notes:[{media:"m1", text:"Seen: pallets and loose shrink wrap blocking about half of a marked walkway."}],
+     events:[
+       {id:"e1", summary:"Safe loading practice on dock 4"},
+       {id:"e2", summary:"Forklift entered a trailer on dock 3 without checking chocks"},
+       {id:"e3", summary:"Walkway blocked on dock 2"},
+       {id:"e4", summary:"Toolbox talk on trailer chocking to schedule"}
+     ],
+     steps:[
+       {id:"s1", event:"e1", system:"ehs", object:"observation", title:"Loaders on dock 4 used gloves and wheel chocks", fields:{
+         observation:{value:"Safe", evidence:"doing it right"},
+         category:{value:"Vehicles and mobile equipment", evidence:"wheel chocks in before loading"},
+         location:{value:"Shipping Dock", evidence:"at the shipping dock"},
+         description:{value:"Two loaders wore gloves and set wheel chocks before loading.", evidence:"gloves on and wheel chocks in before loading"},
+         feedback_given:{value:null, evidence:""}},
+        questions:[], flags:[], links:[]},
+       {id:"s2", event:"e2", system:"ehs", object:"observation", title:"Forklift entered a trailer without checking the chocks", fields:{
+         observation:{value:"At-risk", evidence:"drove into a trailer on dock 3 without checking it was chocked"},
+         category:{value:"Vehicles and mobile equipment", evidence:"drove into a trailer on dock 3"},
+         location:{value:"Shipping Dock", evidence:"at the shipping dock"},
+         description:{value:"A forklift driver drove into a trailer at dock 3 without checking that it was chocked.", evidence:"drove into a trailer on dock 3 without checking it was chocked"},
+         feedback_given:{value:"Yes", evidence:"Gave him feedback on the spot"}},
+        questions:[], flags:[{kind:"sif_precursor", note:"An unchocked trailer can move while a forklift drives in.", evidence:"without checking it was chocked"}], links:[]},
+       {id:"s3", event:"e3", system:"ehs", object:"concern", title:"Pallets and shrink wrap blocking the dock 2 walkway", fields:{
+         concern_type:{value:"Unsafe condition", evidence:"Housekeeping on dock 2 is bad"},
+         location:{value:"Shipping Dock", evidence:"Housekeeping on dock 2"},
+         description:{value:"Pallets and shrink wrap are in the walkway at dock 2.", evidence:"pallets and shrink wrap in the walkway"},
+         immediate_action:{value:null, evidence:""},
+         potential_severity:{value:null, evidence:""}},
+        questions:["Was the walkway cleared, or is it still blocked?"], flags:[], links:[]},
+       {id:"s4", event:"e4", system:"ehs", object:"meeting", title:"Toolbox talk on trailer chocking with the dock crew", fields:{
+         meeting_type:{value:"Toolbox talk", evidence:"I'll schedule a toolbox talk"},
+         status:{value:"Scheduled", evidence:"I'll schedule a toolbox talk"},
+         topic:{value:"Trailer chocking", evidence:"toolbox talk on trailer chocking"},
+         group:{value:"Dock crew", evidence:"with the dock crew"},
+         date:{value:"Thursday", evidence:"for Thursday"},
+         attendee_count:{value:null, evidence:""},
+         attendees:{value:null, evidence:""}},
+        questions:[], flags:[], links:[]}
+     ],
+     not_recorded:[],
+     people_mentioned:["Kevin"]
+   }}
+];
+
+</script>
+<script>
+/* Walkdown engine: checks, plan ordering, prompt and mock connectors. Pure functions, no DOM. */
+"use strict";
+
+const BLAME_RE = /\b(careless\w*|lazy|stupid|idiot\w*|dumb|reckless\w*|complacent|incompetent|negligen\w*|clueless|as usual|didn'?t care|should have known better|not paying attention)\b/i;
+const HEALTH_RE = /\b(sore\w*|pain|pains|painful|aches?|aching|strain\w*|sprain\w*|numb\w*|tingl\w*|swollen|swelling|bleed\w*|laceration\w*|burn|burns|burned|fractur\w*|stitch\w*|doctor|clinic|physio\w*|medical\w*|symptom\w*|discomfort)\b/i;
+const SIF_RE = /\b(forklifts?|lift trucks?|pedestrians?|trailers?|vehicles?|cranes?|hoists?|suspended|lockout|locked out|tag ?out|tagged out|disconnect|energi[sz]ed|arc flash|live wire|falls?|falling|fell|edge|heights?|ladders?|roofs?|scaffold\w*|tie-?off|harness|mezzanine|confined space|sump|gas monitor|trench\w*|excavation|line of fire|caught|struck|dropped|guards?|guarding|conveyors?|rotating|light curtain)\b/i;
+const FAST_RE = /\b(ambulance|hospital\w*|paramedics?|911|amputat\w*|unconscious|passed out|fatal\w*|died|death|fractur\w*|broken (?:arm|leg|wrist|hand|bone|finger)s?|loss of (?:an )?eye|lost (?:a|an|his|her|their) (?:finger|eye|hand)|critical injur\w*)\b/gi;
+const SIF_OBJECTS = new Set(["concern","incident","finding","observation","contractor_obs"]);
+const NUMW = {one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20};
+
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function escRe(s){ return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+function systemById(id){ return SYSTEMS.find(s => s.id === id) || null; }
+function objectDef(sysId, obj){ const s = systemById(sysId); return s && s.objects[obj] ? s.objects[obj] : null; }
+function isEmptyVal(v){
+  if (v === undefined || v === null) return true;
+  if (typeof v === "string"){ const t = v.trim(); return !t || /^(null|none|unknown|n\/a|not stated|not specified)$/i.test(t); }
+  return false;
+}
+
+/* ---- Text matching: lower-case, unify quotes and dashes, collapse whitespace, keep a map to original offsets ---- */
+function normMap(s){
+  const out = [], map = []; let prevSpace = true;
+  for (let i = 0; i < s.length; i++){
+    let c = s[i];
+    if (/[‘’‛′`]/.test(c)) c = "'";
+    else if (/[“”″]/.test(c)) c = '"';
+    else if (/[–—−]/.test(c)) c = "-";
+    c = c.toLowerCase();
+    if (/\s/.test(c)){ if (prevSpace) continue; c = " "; prevSpace = true; } else prevSpace = false;
+    out.push(c); map.push(i);
+  }
+  if (out.length && out[out.length - 1] === " "){ out.pop(); map.pop(); }
+  return {n:out.join(""), map};
+}
+function normStr(s){ return normMap(String(s == null ? "" : s)).n; }
+function tokenize(n){ const re = /[a-z0-9']+/g, toks = []; let m; while ((m = re.exec(n))) toks.push({t:m[0], s:m.index, e:m.index + m[0].length}); return toks; }
+function trimQuote(q){ return normStr(q).replace(/^[\s"'.,;:!?()\-]+|[\s"'.,;:!?()\-]+$/g, ""); }
+
+function makeSources(input, raw){
+  const list = [{id:"notes", label:"Notes", text:String(input.text || "")}];
+  const notes = (raw && Array.isArray(raw.media_notes)) ? raw.media_notes : [];
+  notes.forEach((n, i) => {
+    if (!n || !n.text) return;
+    const key = String(n.media || "");
+    const m = (input.media || []).find(x => x.id === key || x.label.toLowerCase() === key.toLowerCase());
+    list.push({id:m ? m.id : "m" + (i + 1), label:(m ? m.label : (key || "Media " + (i + 1))), text:String(n.text)});
+  });
+  list.forEach(s => { s.nm = normMap(s.text); s.toks = tokenize(s.nm.n); });
+  return list;
+}
+function approxIn(src, q){
+  const qt = tokenize(q).map(x => x.t); if (qt.length < 3) return null;
+  const L = qt.length, T = src.toks; let best = {score:0};
+  for (let i = 0; i < T.length; i++){
+    for (const w of [L - 1, L, L + 1, L + 2]){
+      if (w < 1 || i + w > T.length) continue;
+      const bag = {}; for (let k = i; k < i + w; k++) bag[T[k].t] = (bag[T[k].t] || 0) + 1;
+      let hit = 0; for (const t of qt){ if (bag[t] > 0){ hit++; bag[t]--; } }
+      const score = hit / L - Math.max(0, w - L) * 0.02;
+      if (score > best.score) best = {score, s:T[i].s, e:T[i + w - 1].e};
+    }
+  }
+  return best.score >= 0.8 ? best : null;
+}
+function locate(quote, sources){
+  const q = trimQuote(quote); if (q.length < 2) return null;
+  for (const s of sources){
+    const idx = s.nm.n.indexOf(q);
+    if (idx >= 0) return {src:s.id, start:s.nm.map[idx], end:s.nm.map[idx + q.length - 1] + 1, exact:true};
+  }
+  let best = null;
+  for (const s of sources){
+    const a = approxIn(s, q);
+    if (a && (!best || a.score > best.score)) best = {src:s.id, start:s.nm.map[a.s], end:s.nm.map[a.e - 1] + 1, exact:false, score:a.score};
+  }
+  return best;
+}
+function grounded(kind, value, evidence){
+  const e = normStr(evidence);
+  if (kind === "number"){
+    const n = Number(value); if (!isFinite(n)) return false;
+    if (new RegExp("(^|[^0-9])" + n + "([^0-9]|$)").test(e)) return true;
+    return Object.keys(NUMW).some(w => NUMW[w] === n && new RegExp("\\b" + w + "\\b").test(e));
+  }
+  const stop = new Set(["the","and","from","with","for","team","crew","dept","department","self"]);
+  const toks = (normStr(String(value)).match(/[a-z][a-z'\-]{2,}/g) || []).filter(t => !stop.has(t));
+  if (!toks.length) return true;
+  return toks.every(t => new RegExp("\\b" + escRe(t)).test(e));
+}
+function sentenceSpans(text){
+  const out = [], re = /[^.!?\n]+[.!?]*/g; let m;
+  while ((m = re.exec(text))){
+    const s = m[0], lead = s.length - s.replace(/^\s+/, "").length, t = s.trim();
+    if (t.replace(/[^a-z0-9]/gi, "").length >= 3) out.push({start:m.index + lead, end:m.index + lead + t.length});
+  }
+  return out;
+}
+
+/* ---- Checks: run on every plan, independent of the model ---- */
+function checkStep(r, ri, ctx){
+  const id = String(r.id || ("s" + (ri + 1)));
+  const def = objectDef(r.system, r.object), sys = systemById(r.system);
+  const step = {id, event:r.event ? String(r.event) : "", system:String(r.system || ""), object:String(r.object || ""), sys, def,
+    title:String(r.title || "Untitled step"), fields:[], flags:[], by:r.by || "AI",
+    questions:(Array.isArray(r.questions) ? r.questions : []).map(String).filter(s => s.trim()), links:[]};
+  (Array.isArray(r.flags) ? r.flags : []).forEach(f => { if (f && f.kind) step.flags.push({kind:String(f.kind), note:String(f.note || ""), by:r.by || "AI"}); });
+  if (!def){ step.flags.push({kind:"unroutable", note:"“" + step.system + " / " + step.object + "” is not a record type in the connected systems, so this step cannot be sent.", by:"Rule"}); return step; }
+  const rf = (r.fields && typeof r.fields === "object") ? r.fields : {};
+  def.fields.forEach(fd => {
+    const f = {key:fd.key, def:fd, value:null, evidence:"", status:"empty", note:"", loc:null, removed:null, qid:id + "." + fd.key, linkFrom:null};
+    if (fd.kind === "link"){ step.fields.push(f); return; }
+    let got = rf[fd.key]; if (got === undefined || got === null) got = {}; if (typeof got !== "object") got = {value:got, evidence:""};
+    let value = isEmptyVal(got.value) ? null : got.value;
+    if (value !== null && typeof value === "object") value = JSON.stringify(value);
+    f.value = value; f.evidence = got.evidence ? String(got.evidence) : "";
+    if (value !== null){
+      ctx.log.filled++; f.status = "ok";
+      if (fd.policy === "person_decides"){ f.removed = value; f.value = null; f.status = "decision"; f.note = "Cleared: a person decides this."; ctx.log.decisions++; }
+      else if (!f.evidence.trim()){ f.removed = value; f.value = null; f.status = "unsupported"; f.note = "No quote from the capture, so the value was removed."; ctx.log.unsupported++; }
+      else {
+        const loc = locate(f.evidence, ctx.sources);
+        if (!loc){ f.removed = value; f.value = null; f.status = "unsupported"; f.note = "The quote is not in the capture, so the value was removed."; ctx.log.unsupported++; }
+        else {
+          f.loc = loc;
+          if (!loc.exact){ f.status = "approx"; f.note = "The quote only roughly matches the capture. Check the wording."; }
+          const opts = fd.kind === "location" ? SITE.locations : fd.options;
+          if (opts && opts.length){
+            const m = opts.find(o => o.toLowerCase() === String(value).toLowerCase().trim());
+            if (!m){ f.removed = value; f.value = null; f.status = "invalid"; f.note = "Not on the system's pick-list, so the value was removed."; ctx.log.invalid++; }
+            else f.value = m;
+          }
+          if (f.value !== null && (fd.kind === "person" || fd.kind === "number") && !grounded(fd.kind, f.value, f.evidence)){
+            f.removed = f.value; f.value = null; f.status = "ungrounded";
+            f.note = fd.kind === "person" ? "That name is not in the quote, so the value was removed." : "That number is not in the quote, so the value was removed.";
+            ctx.log.ungrounded++;
+          }
+        }
+      }
+    } else if (f.evidence.trim()){ const loc = locate(f.evidence, ctx.sources); if (loc) f.loc = loc; }
+    if (f.value !== null && fd.kind === "number" && typeof f.value === "string" && isFinite(Number(f.value))) f.value = Number(f.value);
+    if (f.loc) ctx.intervals.push({src:f.loc.src, start:f.loc.start, end:f.loc.end, qid:f.qid, rid:id, kind:"ev"});
+    step.fields.push(f);
+  });
+  (Array.isArray(r.links) ? r.links : []).forEach(l => {
+    if (!l) return;
+    const f = step.fields.find(x => x.key === l.field && x.def.kind === "link");
+    if (f && l.from && String(l.from) !== id){ f.linkFrom = String(l.from); step.links.push({field:f.key, from:String(l.from)}); }
+  });
+  if (def.noNames && ctx.people.length){
+    const removed = [];
+    ctx.people.forEach(p => {
+      const rx = () => new RegExp("\\b" + escRe(p) + "\\b", "gi"); let hit = false;
+      if (rx().test(step.title)){ step.title = step.title.replace(rx(), "[worker]"); hit = true; }
+      step.fields.forEach(f => { if (typeof f.value === "string" && f.def.policy !== "restricted" && rx().test(f.value)){ f.value = f.value.replace(rx(), "[worker]"); hit = true; } });
+      if (hit) removed.push(p);
+    });
+    if (removed.length){ ctx.log.namesRemoved += removed.length; step.flags.push({kind:"name_removed", note:"Removed " + removed.map(n => "“" + n + "”").join(", ") + ". This record type tracks what was done, not who did it.", by:"Rule"}); }
+  }
+  const openTexts = [step.title].concat(step.fields.filter(f => typeof f.value === "string" && f.def.kind === "text" && f.def.policy !== "restricted").map(f => f.value));
+  const blame = openTexts.join(" \n ").match(BLAME_RE);
+  if (blame) step.flags.push({kind:"blame_language", note:"“" + blame[0] + "” judges a person. Describe the condition or the action instead.", by:"Rule"});
+  if (step.object !== "incident"){
+    const h = openTexts.join(" \n ").replace(/\b(?:no|without|not|nobody|none|un)\b[^.;,\n]{0,14}?injur\w*|\buninjured\b/gi, "").match(HEALTH_RE);
+    if (h) step.flags.push({kind:"health_open", note:"“" + h[0] + "” is a health detail in a field many people can see. Move it to a restricted field.", by:"Rule"});
+  }
+  const safeObs = step.object === "observation" && step.fields.some(f => f.key === "observation" && f.value === "Safe");
+  if (SIF_OBJECTS.has(step.object) && !safeObs && !step.flags.some(f => f.kind === "sif_precursor")){
+    const hay = [step.title].concat(step.fields.map(f => f.evidence || ""), step.fields.map(f => typeof f.value === "string" ? f.value : "")).join(" ");
+    const m = hay.match(SIF_RE);
+    if (m) step.flags.push({kind:"sif_check", note:"Mentions “" + m[0] + "”. Check whether someone was exposed to a serious-injury hazard.", by:"Rule"});
+  }
+  return step;
+}
+
+function orderSteps(steps){
+  const ids = new Set(steps.map(s => s.id)), indeg = {}, next = {};
+  steps.forEach(s => { indeg[s.id] = 0; next[s.id] = []; });
+  steps.forEach(s => s.links.forEach(l => { if (ids.has(l.from)){ indeg[s.id]++; next[l.from].push(s.id); } }));
+  const queue = steps.filter(s => indeg[s.id] === 0).map(s => s.id), out = [];
+  while (queue.length){ const id = queue.shift(); out.push(id); next[id].forEach(n => { if (--indeg[n] === 0) queue.push(n); }); }
+  const cyclic = steps.filter(s => !out.includes(s.id)).map(s => s.id);
+  return {order:out.concat(cyclic), cyclic};
+}
+
+function runChecks(raw, input){
+  const sources = makeSources(input, raw);
+  const people = ((raw && raw.people_mentioned) || []).map(String).map(s => s.trim()).filter(s => s.length > 1);
+  const ctx = {sources, people, intervals:[], log:{filled:0, unsupported:0, invalid:0, ungrounded:0, decisions:0, namesRemoved:0, linksDropped:0}};
+  const rawSteps = ((raw && raw.steps) || []).filter(r => r && typeof r === "object");
+  const steps = rawSteps.map((r, i) => checkStep(r, i, ctx));
+  const known = new Set(steps.map(s => s.id));
+  steps.forEach(s => {
+    const bad = s.links.filter(l => !known.has(l.from));
+    if (bad.length){
+      ctx.log.linksDropped += bad.length;
+      s.links = s.links.filter(l => known.has(l.from));
+      s.fields.forEach(f => { if (f.linkFrom && !known.has(f.linkFrom)) f.linkFrom = null; });
+      s.flags.push({kind:"link_dropped", note:"A link pointed to a step that does not exist, so it was removed.", by:"Rule"});
+    }
+  });
+
+  /* Serious-event scan of the raw capture: runs on the text itself, not on the model's output. */
+  const fastTerms = [];
+  sources.forEach(s => {
+    for (const m of s.text.matchAll(FAST_RE)){
+      ctx.intervals.push({src:s.id, start:m.index, end:m.index + m[0].length, kind:"fast"});
+      if (!fastTerms.some(t => t.toLowerCase() === m[0].toLowerCase())) fastTerms.push(m[0]);
+    }
+  });
+  const hasImmediate = steps.some(s => s.system === "alerts" && s.fields.some(f => f.key === "urgency" && f.value === "Immediate"));
+  if (fastTerms.length && !hasImmediate){
+    const quote = fastTerms[0];
+    const ruleStep = checkStep({id:"alert-now", event:steps[0] ? steps[0].event : "", system:"alerts", object:"message", by:"Rule",
+      title:"Possible serious event: alert the EHS manager now",
+      fields:{to:{value:"EHS manager", evidence:quote}, urgency:{value:"Immediate", evidence:quote},
+        message:{value:"The capture mentions " + fastTerms.map(t => "“" + t + "”").join(", ") + ". Review it now; reporting deadlines may apply.", evidence:quote}},
+      flags:[{kind:"fast_lane", note:"Added by a rule because the capture mentions a possible serious event.", evidence:quote}], links:[]}, steps.length, ctx);
+    ruleStep.by = "Rule";
+    steps.unshift(ruleStep);
+  }
+  steps.forEach(s => { if (s.system === "alerts" && s.fields.some(f => f.key === "urgency" && f.value === "Immediate") && !s.flags.some(f => f.kind === "fast_lane")) s.flags.push({kind:"fast_lane", note:"Immediate alerts can be sent before the rest of the plan.", by:"Rule"}); });
+
+  const notRecorded = ((raw && raw.not_recorded) || []).filter(x => x && x.quote).map(x => {
+    const loc = locate(String(x.quote), sources);
+    if (loc) ctx.intervals.push({src:loc.src, start:loc.start, end:loc.end, kind:"skip"});
+    return {quote:String(x.quote), reason:String(x.reason || ""), found:!!loc};
+  });
+  /* Coverage applies to what the person said or wrote; media notes are the model's own reading. */
+  let covered = 0, total = 0;
+  sources.filter(s => s.id === "notes").forEach(s => sentenceSpans(s.text).forEach(sp => {
+    total++;
+    const hit = ctx.intervals.some(v => v.src === s.id && (v.kind === "ev" || v.kind === "skip") && Math.min(v.end, sp.end) - Math.max(v.start, sp.start) >= 3);
+    if (hit) covered++; else ctx.intervals.push({src:s.id, start:sp.start, end:sp.end, kind:"gap"});
+  }));
+  const ord = orderSteps(steps);
+  ord.cyclic.forEach(id => { const s = steps.find(x => x.id === id); if (s) s.flags.push({kind:"link_cycle", note:"This step's links form a loop, so its order could not be worked out.", by:"Rule"}); });
+  return {steps, order:ord.order, events:Array.isArray(raw && raw.events) ? raw.events : [], sources, intervals:ctx.intervals, fastTerms, notRecorded, people, log:ctx.log, coverage:{covered, total}};
+}
+
+/* ---- Prompt for live drafting ---- */
+function catalogForPrompt(){
+  return SYSTEMS.map(s => ({system:s.id, name:s.name, record_types:Object.keys(s.objects).map(k => {
+    const d = s.objects[k];
+    return {type:k, label:d.label, verb:d.verb, no_names:!!d.noNames, fields:d.fields.map(f => { const o = {key:f.key, label:f.label, kind:f.kind}; if (f.kind !== "location" && f.options) o.options = f.options; if (f.required) o.required = true; if (f.policy) o.policy = f.policy; return o; })};
+  })}));
+}
+function buildPrompt(input, manifest){
+  const mediaLines = manifest && manifest.length ? manifest.map(m => "- " + m.label + (m.kind === "video" ? " (video): images " + m.images + ", frames sampled from the clip; sound is not available" : m.kind === "document" ? " (photo of a document): image " + m.images : " (photo): image " + m.images)).join("\n") : "- none";
+  return "You turn a safety professional's field capture into a PLAN of steps across the customer's existing EHS systems. A person reviews and approves every step before anything is sent, so accuracy matters more than completeness.\n\n"
+  + "Site: " + SITE.name + ". Locations: " + JSON.stringify(SITE.locations) + "\n"
+  + "Connected systems and their record types (JSON):\n" + JSON.stringify(catalogForPrompt()) + "\n"
+  + "The permit system's \"permit_check\" looks up a contractor's permit; it creates nothing.\n\n"
+  + "Media attached, in order:\n" + mediaLines + "\n\n"
+  + "Rules\n"
+  + "1. Split the capture into separate events. One event can need steps in several systems. Create a step only when the capture supports it. Small talk, admin work and items already closed go in \"not_recorded\" with a short reason.\n"
+  + "2. Each step targets one system and one record type from the list above.\n"
+  + "3. Every field value needs \"evidence\": words copied exactly from the notes or from your media_notes, the shortest span that supports the value (usually 3 to 20 words). If nothing supports a field, use \"value\": null and \"evidence\": \"\". Never guess names, dates, numbers, owners or causes.\n"
+  + "4. \"enum\" fields take one of their options exactly, or null. \"location\" fields take one of the site locations exactly, or null. \"number\" fields take a number stated in the capture.\n"
+  + "5. Fields with \"policy\": \"person_decides\" must be null. When such a decision matters, add a flag {\"kind\":\"decision_needed\"} saying what a person must decide.\n"
+  + "6. Fields with \"policy\": \"restricted\" hold personal and health details. Put symptoms, body parts and treatment only there, never in titles or other fields.\n"
+  + "7. Record types with \"no_names\": true must not contain any person's name, including in the title.\n"
+  + "8. Titles under 12 words. Write titles and text fields in neutral, factual language about conditions and actions, not people's character. Do not repeat judging words such as \"careless\".\n"
+  + "9. Flags are objects {\"kind\",\"note\",\"evidence\"}: \"sif_precursor\" when someone was or could have been exposed to high energy (vehicles near people, hazardous energy or lockout gaps, open edges and work at height, falling objects, suspended loads, confined spaces, line of fire, caught-in points, electrical); \"fast_lane\" for a possible fatality, hospital visit, ambulance, amputation, loss of an eye or unconsciousness; \"decision_needed\" as in rule 5; \"duplicate_check\" when the capture says it happened or was reported before.\n"
+  + "10. Fields of kind \"link\" are filled by the systems after sending. Never fill them. When a record should reference another step's record (a corrective action and its work order, a contractor observation and its permit check, a training assignment or alert and the record it is about), add {\"field\":\"<link field key>\",\"from\":\"<step id>\"} to that step's \"links\".\n"
+  + "11. A commitment (\"Mike will fix it by end of shift\") becomes a corrective action, and a work order when maintenance does the work, with owner and due date exactly as said. Create training assignments and alerts only when the capture asks for them, except an Immediate alert to the EHS manager for anything that meets rule 9's \"fast_lane\". Do not invent work nobody asked for; add a question instead.\n"
+  + "12. For each required field left null, add one short follow-up question to the step.\n"
+  + "13. List every person named in the capture in \"people_mentioned\".\n"
+  + "14. For each media item, add a \"media_notes\" entry keyed by its label: first any written words copied exactly (labels, tags, permit numbers), then a line starting \"Seen:\" that plainly describes what is visible. For video, describe what the frames show and do not claim anything about sound.\n\n"
+  + "Reply with only JSON in exactly this shape:\n"
+  + "{\"media_notes\":[{\"media\":\"Photo 1\",\"text\":\"...\"}],\n \"events\":[{\"id\":\"e1\",\"summary\":\"...\"}],\n \"steps\":[{\"id\":\"s1\",\"event\":\"e1\",\"system\":\"<system id>\",\"object\":\"<record type>\",\"title\":\"...\",\"fields\":{\"<field key>\":{\"value\":null,\"evidence\":\"\"}},\"questions\":[],\"flags\":[],\"links\":[]}],\n \"not_recorded\":[{\"quote\":\"...\",\"reason\":\"...\"}],\n \"people_mentioned\":[]}\n"
+  + "Include every non-link field key of the record type in \"fields\".\n\n"
+  + "Notes, typed or dictated:\n\"\"\"\n" + (input.text && input.text.trim() ? input.text : "(no notes; use the media)") + "\n\"\"\"";
+}
+
+/* ---- Mock systems ---- */
+function newSystemsState(){
+  return {idem:{}, ehs:{down:false, records:[], seq:1040}, cmms:{down:false, records:[], seq:20871}, ptw:{down:false, records:[], seq:0, permits:clone(PERMITS)}, lms:{down:false, records:[], seq:310}, alerts:{down:false, records:[], seq:5520}};
+}
+function validateValues(def, values){
+  const errs = [];
+  def.fields.forEach(f => {
+    if (f.kind === "link") return;
+    const v = values[f.key];
+    if (isEmptyVal(v)){ if (f.required) errs.push(f.label + " is required."); return; }
+    if (f.kind === "enum" && !(f.options || []).includes(String(v))) errs.push(f.label + " must be one of the allowed values.");
+    if (f.kind === "location" && !SITE.locations.includes(String(v))) errs.push(f.label + " must be a site location.");
+    if (f.kind === "number" && !isFinite(Number(v))) errs.push(f.label + " must be a number.");
+  });
+  return errs;
+}
+function findPermit(permits, values){
+  const num = String(values.permit_number || "").trim().toLowerCase();
+  if (num){ const p = permits.find(x => x.id.toLowerCase() === num); if (p) return p; }
+  const c = String(values.contractor || "").trim().toLowerCase();
+  if (!c) return null;
+  const hits = permits.filter(p => p.contractor.toLowerCase().includes(c) || c.includes(p.contractor.toLowerCase()));
+  if (!hits.length) return null;
+  const loc = String(values.location || "").toLowerCase();
+  return hits.find(p => p.location.toLowerCase() === loc) || hits[0];
+}
+function mockSend(state, step, values, idemKey, now){
+  const sys = state[step.system], def = objectDef(step.system, step.object), sdef = systemById(step.system);
+  if (!sys || !def) return {ok:false, code:400, error:"This record type does not exist in the connected systems."};
+  if (state.idem[idemKey]) return Object.assign({ok:true, duplicate:true}, state.idem[idemKey]);
+  if (sys.down) return {ok:false, code:503, error:sdef.name + " is not responding."};
+  const errs = validateValues(def, values);
+  if (errs.length) return {ok:false, code:422, error:errs.join(" ")};
+  let id, result = null;
+  if (def.action === "check"){
+    const p = findPermit(sys.permits, values);
+    id = p ? p.id : "No matching permit"; result = p ? {found:true, permit:p} : {found:false};
+  } else { sys.seq++; id = def.prefix + "-" + sys.seq; }
+  sys.records.unshift({id, object:step.object, label:def.label, title:step.title, values:clone(values), at:now, result, key:idemKey});
+  state.idem[idemKey] = {id, result};
+  return {ok:true, id, result};
+}
+
+/* ---- Deliberate faults for the guardrail demo ---- */
+function injectFaults(raw){
+  const r = clone(raw), faults = [];
+  const steps = r.steps || [];
+  const findField = pred => { for (const s of steps){ const d = objectDef(s.system, s.object); if (!d) continue; const f = d.fields.find(x => pred(x, s)); if (f) return {s, f}; } return null; };
+  const a = findField(f => f.kind === "person" && !f.policy);
+  if (a){ a.s.fields = a.s.fields || {}; a.s.fields[a.f.key] = {value:"Dave Kowalski", evidence:"Dave Kowalski said he would handle it"}; faults.push({sid:a.s.id, key:a.f.key, kind:"unsupported", what:"Invented " + a.f.label.toLowerCase() + " “Dave Kowalski” with a quote that is not in the capture"}); }
+  const b = findField(f => f.policy === "person_decides");
+  if (b){ b.s.fields = b.s.fields || {}; b.s.fields[b.f.key] = {value:(b.f.options && b.f.options[0]) || "Low", evidence:""}; faults.push({sid:b.s.id, key:b.f.key, kind:"decision", what:"AI filled " + b.f.label.toLowerCase() + ", which a person must decide"}); }
+  const c = findField(f => f.kind === "location");
+  if (c){ const ev = (c.s.fields && c.s.fields[c.f.key] && c.s.fields[c.f.key].evidence) || ""; c.s.fields[c.f.key] = {value:"Loading Bay 9", evidence:ev}; faults.push({sid:c.s.id, key:c.f.key, kind:"invalid", what:"Location “Loading Bay 9”, which is not in the site's location list"}); }
+  const d = steps.find(x => SIF_OBJECTS.has(x.object));
+  if (d){ d.title = d.title + ", careless operator"; faults.push({sid:d.id, kind:"blame", what:"Added “careless operator” to a title"}); }
+  return {raw:r, faults};
+}
+function faultCaught(f, chk){
+  const s = chk.steps.find(x => x.id === f.sid); if (!s) return false;
+  if (f.kind === "blame") return s.flags.some(x => x.kind === "blame_language");
+  const fld = s.fields.find(x => x.key === f.key); if (!fld) return false;
+  if (f.kind === "decision") return fld.status === "decision";
+  if (f.kind === "invalid") return fld.status === "invalid" || fld.status === "unsupported";
+  return ["unsupported","ungrounded","invalid"].includes(fld.status);
+}
+
+</script>
+<script>
+/* Walkdown UI: capture, plan review, sending to mock systems, activity log, feedback. */
+"use strict";
+
+const CONFIG = {
+  publicUrl: "https://saminavaneeth.github.io/walkdown/",
+  claudeUrl: "https://claude.ai/artifact/TKfVxNXDnU1z1h51SuavRu",
+  repoUrl: "https://github.com/saminavaneeth/walkdown",
+  feedbackUrl: "https://github.com/saminavaneeth/walkdown/issues/new",
+  author: {name: "@saminavaneeth", url: "https://github.com/saminavaneeth"}
+};
+
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function load(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+function store(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+function plural(n, a, b){ return n + " " + (n === 1 ? a : (b || a + "s")); }
+function fmt(v){ return v === null || v === undefined ? "" : String(v); }
+function now(){ return Date.now(); }
+function hhmm(t){ try { return new Date(t).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}); } catch (e) { return ""; } }
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+const reduceMotion = (() => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } })();
+function toast(msg){ const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 3400); }
+function scrollToEl(el){ if (el) el.scrollIntoView({behavior: reduceMotion ? "auto" : "smooth", block: "center"}); }
+function flash(el){ if (!el) return; el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); }
+
+const ICON = {
+  photo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="M16 10l5-3v10l-5-3z"/></svg>',
+  document: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg>',
+  mic: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>'
+};
+const FLAG_META = {
+  fast_lane:{label:"Possible serious event", k:"danger"},
+  sif_precursor:{label:"SIF precursor", k:"warn"},
+  sif_check:{label:"Check for SIF", k:"warn"},
+  decision_needed:{label:"Decision for a person", k:"accent"},
+  duplicate_check:{label:"Possible repeat", k:"accent"},
+  health_open:{label:"Health detail in shared field", k:"private"},
+  blame_language:{label:"Judging wording", k:"danger"},
+  name_removed:{label:"Name removed", k:"private"},
+  unroutable:{label:"Cannot be sent", k:"danger"},
+  link_dropped:{label:"Link removed", k:"plain"},
+  link_cycle:{label:"Link loop", k:"danger"}
+};
+const PILL = {draft:"Draft", approved:"Approved", skipped:"Skipped", sent:"Sent", queued:"Queued", failed:"Failed", waiting:"Waiting", sending:"Sending"};
+
+/* ===== State ===== */
+let mode = "checking"; // checking | live | demo | denied
+let sampleNs = null, imagesOK = false, maxImages = 12;
+let sys = load("wd2.sys", null);
+if (!sys || !sys.ehs || !sys.cmms || !sys.ptw || !sys.ptw.permits || !sys.lms || !sys.alerts) sys = newSystemsState();
+let logs = load("wd2.log", []); if (!Array.isArray(logs)) logs = [];
+let plan = load("wd2.plan", null);
+let draft = load("wd2.draft", null);
+let chk = null, numMap = {}, tab = "capture";
+let busy = false, sending = false, runCtl = null, procErr = "", mediaSeq = 0;
+const blobs = {}; // media id -> [Blob]; kept in memory only
+
+if (!draft || typeof draft !== "object"){ const s = SCENARIOS[0]; draft = {scenario:s.id, text:s.text, media:s.media.map(m => Object.assign({demo:true}, m))}; }
+draft.media = (draft.media || []).filter(m => m.demo);
+
+function saveSys(){ store("wd2.sys", sys); }
+function savePlan(){ store("wd2.plan", plan); }
+function saveDraft(){ store("wd2.draft", {scenario:draft.scenario, text:draft.text, media:draft.media.filter(m => m.demo)}); }
+function addLog(text, kind){ logs.unshift({at:now(), text, kind:kind || ""}); if (logs.length > 300) logs.length = 300; store("wd2.log", logs); if (tab === "activity") renderLog(); }
+
+function recompute(){
+  chk = null;
+  if (!plan) return;
+  try {
+    chk = runChecks(plan.injected ? plan.injected.raw : plan.raw, plan.input);
+    if (plan.injected) plan.injected.faults.forEach(f => { f.caught = faultCaught(f, chk); });
+  } catch (e) { plan = null; chk = null; }
+}
+recompute();
+
+/* ===== Tabs ===== */
+const TABS = ["capture","plan","systems","activity","about"];
+function showTab(t, keepScroll){
+  if (!TABS.includes(t)) t = "capture";
+  tab = t;
+  TABS.forEach(x => { $("#v-" + x).hidden = x !== t; });
+  $$(".nav button").forEach(b => { if (b.dataset.tab === t) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+  store("wd2.tab", t);
+  if (t === "capture") renderCapture();
+  if (t === "plan") renderPlan();
+  if (t === "systems") renderSystems();
+  if (t === "activity") renderLog();
+  if (t === "about") renderAbout();
+  renderDock();
+  if (!keepScroll) window.scrollTo(0, 0);
+}
+$$(".nav button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+document.addEventListener("click", e => { const g = e.target.closest("[data-tab-go]"); if (g) showTab(g.dataset.tabGo); });
+
+/* ===== Live AI availability ===== */
+function withTimeout(p, ms){ return Promise.race([p, new Promise(r => setTimeout(() => r(null), ms))]); }
+async function detect(){
+  try {
+    if (window.claude && typeof window.claude.use === "function"){
+      sampleNs = await withTimeout(window.claude.use("sample").catch(() => null), 4000);
+      if (sampleNs){
+        const lim = await withTimeout(sampleNs.limits().catch(() => null), 4000);
+        imagesOK = !!(lim && lim.images);
+        if (imagesOK && lim.images.maxCount) maxImages = Math.max(1, Math.min(12, lim.images.maxCount));
+      }
+    }
+  } catch (e) { sampleNs = null; }
+  mode = sampleNs ? "live" : "demo";
+  renderMode(); renderCapture(); renderAbout();
+}
+function renderMode(){
+  const m = $("#mode");
+  m.classList.toggle("live", mode === "live");
+  m.textContent = mode === "live" ? "Live AI" : mode === "checking" ? "Checking…" : "Demo";
+  m.title = mode === "live" ? "Claude reads your captures on your own Claude account." : "Demo scenarios replay a recorded AI result. Everything else runs live in your browser.";
+}
+
+/* ===== Capture ===== */
+function scen(){ return draft.scenario ? SCENARIOS.find(s => s.id === draft.scenario) || null : null; }
+function userMedia(){ return draft.media.filter(m => !m.demo); }
+function draftIsPristine(){
+  const s = scen();
+  return !!s && draft.text.trim() === s.text.trim() && !userMedia().length && draft.media.length === s.media.length;
+}
+function inputsSummary(s){
+  const parts = [s.voice ? "Voice " + s.voice.duration : "Typed notes"];
+  const c = k => s.media.filter(m => m.kind === k).length;
+  if (c("photo")) parts.push(plural(c("photo"), "photo"));
+  if (c("video")) parts.push(plural(c("video"), "video"));
+  if (c("document")) parts.push(plural(c("document"), "document"));
+  return parts.map(p => "<span>" + esc(p) + "</span>").join("");
+}
+function renderScenarios(){
+  $("#scen").innerHTML = SCENARIOS.map(s => '<button type="button" data-s="' + esc(s.id) + '" aria-pressed="' + (draft.scenario === s.id) + '"' + (busy ? " disabled" : "") + '><b>' + esc(s.title) + '</b><span class="note">' + esc(s.blurb) + '</span><span class="inputs">' + inputsSummary(s) + "</span></button>").join("");
+}
+function tileHTML(m){
+  const pic = m.thumb ? '<img src="' + esc(m.thumb) + '" alt="">' : '<span class="ph">' + (ICON[m.kind] || ICON.photo) + "</span>";
+  const sub = m.kind === "video" && m.frames ? " · " + m.frames + " frames" : "";
+  return '<div class="tile">' + pic + (m.demo ? '<span class="demo-tag">demo</span>' : '<button type="button" class="rm" data-rm="' + esc(m.id) + '" aria-label="Remove ' + esc(m.label) + '">×</button>')
+    + '<div class="cap"><b>' + esc(m.label + sub) + "</b>" + esc(m.caption || "") + "</div></div>";
+}
+function renderMedia(){ $("#media").innerHTML = draft.media.map(tileHTML).join(""); $("#media").hidden = !draft.media.length; }
+function imagesUsed(){ return userMedia().reduce((n, m) => n + ((blobs[m.id] || []).length), 0); }
+function renderCapture(){
+  renderScenarios();
+  const s = scen();
+  $("#comp-title").textContent = s ? "Demo capture · " + s.title : "Your capture";
+  const v = $("#voice");
+  if (s && s.voice){ v.hidden = false; v.innerHTML = ICON.mic + "<b>Voice note " + esc(s.voice.duration) + '</b><span class="wave" aria-hidden="true"></span><span>Transcript below</span>'; }
+  else v.hidden = true;
+  if ($("#cap-text").value !== draft.text) $("#cap-text").value = draft.text;
+  $("#cap-text").disabled = busy;
+  renderMedia();
+  const canMedia = mode === "live" && imagesOK && !busy;
+  $$("#adds .file-btn").forEach(l => { l.classList.toggle("is-off", !canMedia); const i = $("input", l); i.disabled = !canMedia; });
+  const mn = $("#media-note");
+  if (mode === "live" && imagesOK) mn.textContent = "Up to " + maxImages + " images per capture. A video is sampled into 5 frames; its sound is not used yet.";
+  else if (mode === "live") mn.textContent = "Photos cannot be sent from this view, so captures here are text only.";
+  else if (mode === "checking") mn.textContent = "";
+  else mn.innerHTML = "Your own photos, video and documents work in the live version inside Claude" + (CONFIG.claudeUrl ? ': <a href="' + esc(CONFIG.claudeUrl) + '" target="_blank" rel="noopener">open it</a>.' : ".");
+  renderProcess();
+}
+function renderProcess(){
+  const btn = $("#process"), msg = $("#proc-msg");
+  const s = scen(), pristine = draftIsPristine();
+  const hasInput = !!(draft.text.trim() || userMedia().length);
+  let dis = busy, note = "";
+  if (busy) note = "";
+  else if (pristine){
+    note = mode === "live" ? 'Uses the recorded AI result for this scenario, so it is instant. <button type="button" class="link" id="run-live-anyway">Run Claude on these notes instead</button>'
+      : "Replays a recorded AI result for this scenario. The checks, the plan and the systems all run live in your browser.";
+  } else if (mode === "live"){
+    dis = !hasInput;
+    note = hasInput ? "Claude reads your capture on your own Claude account. It takes about 20 to 60 seconds." : "Type or dictate what you saw, or add a photo.";
+  } else if (mode === "checking"){ dis = true; note = "Checking whether live AI is available…"; }
+  else {
+    dis = true;
+    note = s ? 'You changed the demo notes, and the recorded result only matches the original. <button type="button" class="link" id="restore-scen">Restore the original</button>'
+      : "In this demo, choose a scenario above.";
+    note += " Live AI on your own notes runs inside Claude" + (CONFIG.claudeUrl ? ': <a href="' + esc(CONFIG.claudeUrl) + '" target="_blank" rel="noopener">open the live version</a>.' : ".");
+  }
+  btn.disabled = dis;
+  btn.textContent = busy ? "Working…" : "Build the plan";
+  msg.innerHTML = (procErr ? '<span class="errline">' + esc(procErr) + "</span> " : "") + note;
+}
+function pickScenario(id){
+  if (busy) return;
+  const s = SCENARIOS.find(x => x.id === id); if (!s) return;
+  userMedia().forEach(m => { delete blobs[m.id]; });
+  draft = {scenario:s.id, text:s.text, media:s.media.map(m => Object.assign({demo:true}, m))};
+  procErr = ""; saveDraft(); renderCapture();
+  scrollToEl($("#composer"));
+}
+$("#scen").addEventListener("click", e => { const b = e.target.closest("[data-s]"); if (b) pickScenario(b.dataset.s); });
+$("#cap-text").addEventListener("input", e => { draft.text = e.target.value; procErr = ""; clearTimeout(saveDraft._t); saveDraft._t = setTimeout(saveDraft, 400); renderProcess(); });
+$("#clear-draft").addEventListener("click", () => {
+  if (busy) return;
+  userMedia().forEach(m => { delete blobs[m.id]; });
+  draft = {scenario:null, text:"", media:[]}; procErr = ""; saveDraft(); renderCapture(); $("#cap-text").focus();
+});
+$("#media").addEventListener("click", e => {
+  const b = e.target.closest("[data-rm]"); if (!b || busy) return;
+  delete blobs[b.dataset.rm]; draft.media = draft.media.filter(m => m.id !== b.dataset.rm); relabel(); renderCapture();
+});
+$("#proc-msg").addEventListener("click", e => {
+  if (e.target.closest("#run-live-anyway")) runLive(true);
+  if (e.target.closest("#restore-scen") && scen()) pickScenario(scen().id);
+});
+function relabel(){
+  const n = {photo:0, video:0, document:0}, name = {photo:"Photo", video:"Video", document:"Document"};
+  draft.media.forEach(m => { n[m.kind]++; if (!m.demo) m.label = name[m.kind] + " " + n[m.kind]; });
+}
+
+/* Media: photos are downscaled to JPEG, videos are sampled into frames, documents are photos of paper. */
+function drawTo(src, w, h, max){
+  const k = Math.min(1, max / Math.max(w || 1, h || 1));
+  const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+  c.getContext("2d").drawImage(src, 0, 0, c.width, c.height); return c;
+}
+function toBlob(c){ return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error("encode")), "image/jpeg", 0.85)); }
+async function prepImage(file){
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image(); img.src = url; await img.decode();
+    const blob = await toBlob(drawTo(img, img.naturalWidth, img.naturalHeight, 1568));
+    return {blob, thumb:drawTo(img, img.naturalWidth, img.naturalHeight, 240).toDataURL("image/jpeg", 0.7)};
+  } finally { URL.revokeObjectURL(url); }
+}
+function once(el, ev, ms){
+  return new Promise((res, rej) => {
+    const t = setTimeout(() => { done(); rej(new Error("timeout")); }, ms);
+    const ok = () => { done(); res(); }, bad = () => { done(); rej(new Error("media")); };
+    function done(){ clearTimeout(t); el.removeEventListener(ev, ok); el.removeEventListener("error", bad); }
+    el.addEventListener(ev, ok); el.addEventListener("error", bad);
+  });
+}
+async function videoFrames(file, n){
+  const url = URL.createObjectURL(file);
+  const v = document.createElement("video"); v.muted = true; v.playsInline = true; v.preload = "auto"; v.src = url;
+  try {
+    await once(v, "loadeddata", 12000);
+    const d = isFinite(v.duration) && v.duration > 0 ? v.duration : 1, out = []; let thumb = "";
+    for (let i = 0; i < n; i++){
+      v.currentTime = Math.max(0, Math.min(d - 0.05, d * (i + 0.5) / n));
+      await once(v, "seeked", 8000);
+      out.push(await toBlob(drawTo(v, v.videoWidth, v.videoHeight, 1280)));
+      if (!i) thumb = drawTo(v, v.videoWidth, v.videoHeight, 240).toDataURL("image/jpeg", 0.7);
+    }
+    return {frames:out, thumb, duration:d};
+  } finally { URL.revokeObjectURL(url); }
+}
+async function addFiles(input, kind){
+  const files = Array.from(input.files || []); input.value = "";
+  if (!files.length || busy) return;
+  if (draftIsPristine() || scen()){ draft.scenario = null; draft.media = draft.media.filter(m => !m.demo); }
+  $("#media-note").textContent = "Reading " + plural(files.length, "file") + "…";
+  for (const f of files){
+    const left = maxImages - imagesUsed();
+    if (left <= 0){ toast("Up to " + maxImages + " images per capture."); break; }
+    const id = "u" + (++mediaSeq);
+    try {
+      if (kind === "video"){
+        const r = await videoFrames(f, Math.min(5, left));
+        blobs[id] = r.frames;
+        draft.media.push({id, kind, label:"", caption:Math.round(r.duration) + " s clip", thumb:r.thumb, frames:r.frames.length});
+      } else {
+        const r = await prepImage(f);
+        blobs[id] = [r.blob];
+        draft.media.push({id, kind, label:"", caption:kind === "document" ? "Document photo" : "", thumb:r.thumb});
+      }
+    } catch (err) { toast(kind === "video" ? "That video could not be read in this browser." : "That image could not be read. Try a JPEG or PNG."); }
+  }
+  relabel(); procErr = ""; renderCapture();
+}
+$("#add-photo").addEventListener("change", e => addFiles(e.target, "photo"));
+$("#add-video").addEventListener("change", e => addFiles(e.target, "video"));
+$("#add-doc").addEventListener("change", e => addFiles(e.target, "document"));
+
+/* Building a plan */
+const STAGES = ["Reading the media","Splitting the capture into events","Planning steps across the systems","Running the checks"];
+function setStage(i, note){
+  $("#stages-wrap").hidden = false;
+  $("#stages").innerHTML = STAGES.map((s, k) => '<li class="' + (k < i ? "done" : k === i ? "active" : "") + '"><span class="dot">' + (k < i ? "✓" : "") + "</span>" + esc(s) + "</li>").join("");
+  if (note !== undefined) $("#stage-note").textContent = note;
+}
+function inputFromDraft(withDemo){
+  return {text:draft.text, media:draft.media.filter(m => withDemo || !m.demo).map(m => ({id:m.id, kind:m.kind, label:m.label, caption:m.caption || "", thumb:m.thumb || "", frames:m.frames || 0}))};
+}
+function errCopy(e){
+  return ({
+    not_granted:"Claude access was declined for this page. Reload the page to be asked again.",
+    sampling_disabled:"Claude is not available for this account here.",
+    not_declared:"Live AI is not set up on this version of the page.",
+    capability_disabled:"Live AI is not available in this view.",
+    capability_removed:"This app version cannot run live AI. Update or reload the Claude app.",
+    rate_limited:"Too many requests right now. Wait a minute, then try again.",
+    session_expired:"Your Claude session has expired. Sign in again, then try again.",
+    prompt_too_large:"This capture is too long for one run. Split it in two.",
+    images_unavailable:"Images cannot be sent from this view. Remove them and try again.",
+    image_rejected:"One of the images could not be used. Try a different photo.",
+    refused:"Claude declined to process this capture. Edit it and try again.",
+    empty_completion:"No plan came back. Try again.",
+    invalid_json:"The plan came back in a format the page could not read. Try again.",
+    bad_shape:"The plan was missing its list of steps. Try again."
+  })[e && e.code] || "The run was interrupted. Try again.";
+}
+async function replay(){
+  const s = scen(); if (!s || busy) return;
+  busy = true; procErr = ""; renderCapture(); $("#stop").hidden = true;
+  for (let i = 0; i < STAGES.length; i++){ setStage(i, "Recorded AI result"); await sleep(reduceMotion ? 60 : 420); }
+  makePlan({raw:clone(s.recorded), input:inputFromDraft(true), source:"recorded", title:s.title, scenario:s.id});
+  busy = false; $("#stages-wrap").hidden = true;
+  showTab("plan");
+}
+async function runLive(textOnly){
+  if (!sampleNs || busy) return;
+  const input = inputFromDraft(false); if (textOnly) input.media = [];
+  input.media = input.media.filter(m => (blobs[m.id] || []).length);
+  if (!input.text.trim() && !input.media.length){ procErr = "Add notes or a photo first."; renderProcess(); return; }
+  const images = [], manifest = [];
+  input.media.forEach(m => {
+    const b = blobs[m.id], start = images.length + 1;
+    b.forEach(x => images.push(x));
+    manifest.push({label:m.label, kind:m.kind, images:b.length > 1 ? start + " to " + (start + b.length - 1) : String(start)});
+  });
+  busy = true; procErr = ""; runCtl = new AbortController(); const t0 = now();
+  renderCapture(); $("#stop").hidden = false;
+  let stage = images.length ? 0 : 1, steps = 0;
+  setStage(stage, "");
+  const tick = setInterval(() => { $("#stage-note").textContent = (steps ? plural(steps, "step") + " so far · " : "") + Math.round((now() - t0) / 1000) + " s"; }, 1000);
+  try {
+    const opts = {signal:runCtl.signal, onText:({text}) => {
+      let st = stage;
+      if (/"events"\s*:/.test(text)) st = Math.max(st, 1);
+      if (/"steps"\s*:/.test(text)) st = Math.max(st, 2);
+      const n = (text.match(/"system"\s*:/g) || []).length;
+      if (st !== stage || n !== steps){ stage = st; steps = n; setStage(stage); }
+    }};
+    if (images.length) opts.images = images;
+    const raw = await sampleNs.json(buildPrompt(input, manifest), opts);
+    if (!raw || typeof raw !== "object" || !Array.isArray(raw.steps)) throw {code:"bad_shape"};
+    setStage(3); await sleep(250);
+    const first = Array.isArray(raw.events) && raw.events[0] && raw.events[0].summary ? String(raw.events[0].summary) : "";
+    makePlan({raw, input, source:"live", title:first ? (raw.events.length > 1 ? first + " and " + plural(raw.events.length - 1, "more event") : first) : "Your capture", scenario:null});
+    clearInterval(tick); busy = false; runCtl = null; $("#stages-wrap").hidden = true; $("#stop").hidden = true;
+    showTab("plan");
+    return;
+  } catch (e) {
+    if (e && e.code === "cancelled") procErr = "Stopped.";
+    else {
+      procErr = errCopy(e);
+      if (e && ["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(e.code)){ sampleNs = null; mode = e.code === "not_granted" ? "denied" : "demo"; renderMode(); }
+    }
+  }
+  clearInterval(tick); busy = false; runCtl = null; $("#stages-wrap").hidden = true; $("#stop").hidden = true;
+  renderCapture();
+}
+$("#process").addEventListener("click", () => { if (draftIsPristine()) replay(); else runLive(false); });
+$("#stop").addEventListener("click", () => { if (runCtl) runCtl.abort(); });
+
+function makePlan(o){
+  plan = {id:"cap" + now().toString(36), at:now(), source:o.source, title:o.title, scenario:o.scenario, input:o.input, raw:o.raw, injected:null, review:{}, exec:{}, ids:{}};
+  recompute(); savePlan();
+  const removed = chk.log.unsupported + chk.log.invalid + chk.log.ungrounded + chk.log.decisions;
+  addLog((o.source === "live" ? "Claude drafted a plan: " : "Replayed a recorded plan: ") + plural(chk.steps.length, "step") + " across " + plural(systemsUsed().length, "system") + ". Checks removed " + plural(removed, "value") + (chk.fastTerms.length ? " and raised an immediate alert." : "."), "plan");
+}
+
+/* ===== Plan helpers ===== */
+function rv(sid){ if (!plan.review[sid]) plan.review[sid] = {status:"draft", values:{}, answers:{}}; return plan.review[sid]; }
+function ex(sid){ return plan.exec[sid] || null; }
+function stepById(sid){ return chk.steps.find(s => s.id === sid) || null; }
+function has(o, k){ return Object.prototype.hasOwnProperty.call(o, k); }
+function effVal(step, f){
+  if (f.def.kind === "link") return f.linkFrom ? (plan.ids[f.linkFrom] || null) : null;
+  const r = plan.review[step.id];
+  return r && has(r.values, f.key) ? r.values[f.key] : f.value;
+}
+function missing(step){ return step.def ? step.fields.filter(f => f.def.kind !== "link" && f.def.required && isEmptyVal(effVal(step, f))) : []; }
+function decisionsOpen(step){
+  if (!step.def) return [];
+  const flagged = step.flags.some(x => x.kind === "decision_needed");
+  return step.fields.filter(f => f.def.policy === "person_decides" && isEmptyVal(effVal(step, f)) && (flagged || f.status === "decision"));
+}
+function stepState(step){ const e = ex(step.id); return e ? e.state : rv(step.id).status; }
+function isReady(step){ return !!step.def && !missing(step).length; }
+function canEdit(step){ const e = ex(step.id); return e ? e.state === "failed" : rv(step.id).status === "draft"; }
+function systemsUsed(){ return Array.from(new Set(chk.steps.map(s => s.system))).filter(id => systemById(id)); }
+function sentCount(){ return chk.steps.filter(s => ex(s.id) && ex(s.id).state === "sent").length; }
+function valuesFor(step){
+  const v = {};
+  step.fields.forEach(f => { v[f.key] = effVal(step, f); });
+  const r = rv(step.id), qa = step.questions.map((q, i) => ({q, a:(r.answers[i] || "").trim()})).filter(x => x.a);
+  if (qa.length) v._followup = qa;
+  return v;
+}
+function editsCount(step){
+  const r = plan.review[step.id]; if (!r) return 0;
+  return step.fields.filter(f => has(r.values, f.key) && fmt(r.values[f.key]) !== fmt(f.value)).length;
+}
+
+/* ===== Plan rendering ===== */
+function renderSource(text, ivs){
+  const pts = new Set([0, text.length]);
+  ivs.forEach(v => { pts.add(Math.max(0, Math.min(text.length, v.start))); pts.add(Math.max(0, Math.min(text.length, v.end))); });
+  const arr = Array.from(pts).sort((a, b) => a - b); let html = "";
+  for (let i = 0; i < arr.length - 1; i++){
+    const a = arr[i], b = arr[i + 1]; if (a >= b) continue;
+    const cover = ivs.filter(v => v.start <= a && v.end >= b);
+    let s = esc(text.slice(a, b));
+    if (cover.some(v => v.kind === "fast")) s = '<span class="fast">' + s + "</span>";
+    const ev = cover.filter(v => v.kind === "ev");
+    if (ev.length){
+      const qs = Array.from(new Set(ev.map(v => v.qid))).join(" "), rs = Array.from(new Set(ev.map(v => v.rid))).join(" ");
+      s = '<mark class="ev" data-q="' + esc(qs) + '" data-r="' + esc(rs) + '" title="Used in a step. Tap to see it.">' + s + "</mark>";
+    } else if (cover.some(v => v.kind === "skip")) s = '<span class="skip" title="Left out on purpose">' + s + "</span>";
+    else if (cover.some(v => v.kind === "gap")) s = '<span class="gap" title="Not used in any step">' + s + "</span>";
+    html += s;
+  }
+  return html;
+}
+function flagsHTML(step){
+  if (!step.flags.length) return "";
+  return '<ul class="flags">' + step.flags.map(f => {
+    const m = FLAG_META[f.kind] || {label:f.kind.replace(/_/g, " "), k:"plain"};
+    return '<li class="flag"><span class="chip k-' + m.k + '">' + esc(m.label) + '</span><span class="ft">' + esc(f.note) + '</span><span class="by" title="' + (f.by === "Rule" ? "Raised by a rule in the app" : "Raised by the AI") + '">' + esc(f.by) + "</span></li>";
+  }).join("") + "</ul>";
+}
+function controlHTML(step, f){
+  const id = "f-" + step.id + "-" + f.key, v = effVal(step, f), d = f.def;
+  const dis = canEdit(step) ? "" : " disabled";
+  const ph = d.policy === "person_decides" ? "Person decides" : d.required ? "Needed" : "Not stated";
+  if (d.kind === "enum" || d.kind === "location"){
+    const opts = d.kind === "location" ? SITE.locations : (d.options || []);
+    return '<select id="' + id + '" class="ctl" data-sid="' + esc(step.id) + '" data-f="' + esc(f.key) + '"' + dis + '><option value="">' + ph + "…</option>" + opts.map(o => "<option" + (o === v ? " selected" : "") + ">" + esc(o) + "</option>").join("") + "</select>";
+  }
+  const val = fmt(v);
+  if (d.kind === "text" && val.length > 42) return '<textarea id="' + id + '" class="ctl" rows="2" data-sid="' + esc(step.id) + '" data-f="' + esc(f.key) + '"' + dis + ">" + esc(val) + "</textarea>";
+  return '<input id="' + id + '" class="ctl" type="' + (d.kind === "number" ? "number" : "text") + '" inputmode="' + (d.kind === "number" ? "numeric" : "text") + '" value="' + esc(val) + '" data-sid="' + esc(step.id) + '" data-f="' + esc(f.key) + '" placeholder="' + ph + '"' + dis + ">";
+}
+function srcLabel(id){ if (id === "notes") return ""; const s = chk.sources.find(x => x.id === id); return s ? s.label : id; }
+function evidenceHTML(f){
+  if (!f.evidence) return "";
+  if (!f.loc) return '<span class="evq bad" title="Not found in the capture">“' + esc(f.evidence) + "”</span>";
+  const src = f.loc.src !== "notes" ? '<span class="evsrc">' + esc(srcLabel(f.loc.src)) + "</span> " : "";
+  return '<button type="button" class="evq' + (f.loc.exact ? "" : " approx") + '" data-q="' + esc(f.qid) + '" title="Show this in the capture">' + src + "“" + esc(f.evidence) + "”</button>";
+}
+function fnoteHTML(f){
+  if (f.status === "decision") return '<div class="fnote decide">AI suggested <s>' + esc(fmt(f.removed)) + "</s>. " + esc(f.note) + "</div>";
+  if (["unsupported","invalid","ungrounded"].includes(f.status)) return '<div class="fnote">AI suggested <s>' + esc(fmt(f.removed)) + "</s>. " + esc(f.note) + "</div>";
+  if (f.status === "approx") return '<div class="fnote soft">' + esc(f.note) + "</div>";
+  return "";
+}
+function fieldHTML(step, f){
+  const d = f.def, r = plan.review[step.id];
+  if (d.kind === "link"){
+    const from = f.linkFrom ? stepById(f.linkFrom) : null, id = f.linkFrom ? plan.ids[f.linkFrom] : null;
+    const txt = !from ? "Not linked" : id ? id : ex(from.id) && ex(from.id).state === "sent" ? "Nothing to link" : "Gets #" + numMap[from.id] + "'s ID when it is sent";
+    return '<div class="frow"><div class="flabel"><span>' + esc(d.label) + '</span></div><div class="fval"><span class="linkval' + (id ? " set" : "") + '">' + esc(txt) + "</span></div></div>";
+  }
+  const edited = r && has(r.values, f.key) && fmt(r.values[f.key]) !== fmt(f.value);
+  const miss = d.required && isEmptyVal(effVal(step, f));
+  const cls = ["frow", miss ? "missing" : "", d.policy === "restricted" ? "restricted" : ""].join(" ");
+  const pol = d.policy === "person_decides" ? '<span class="pol pol-decide">Person decides</span>' : d.policy === "restricted" ? '<span class="pol pol-priv">Restricted</span>' : "";
+  return '<div class="' + cls + '" data-key="' + esc(f.key) + '"><div class="flabel"><label for="f-' + esc(step.id) + "-" + esc(f.key) + '">' + esc(d.label) + "</label>" + (d.required ? '<span class="req" title="Required">*</span>' : "") + pol + (edited ? '<span class="edited">edited</span>' : "") + "</div>"
+    + '<div class="fval">' + controlHTML(step, f) + evidenceHTML(f) + fnoteHTML(f) + "</div></div>";
+}
+function depsHTML(step){
+  if (!step.links.length) return "";
+  const items = step.links.map(l => { const d = stepById(l.from); if (!d) return ""; const lab = (step.def.fields.find(x => x.key === l.field) || {}).label || l.field; return '<button type="button" class="link" data-goto="' + esc(d.id) + '">#' + numMap[d.id] + " " + esc(d.def ? d.def.label.toLowerCase() : d.object) + "</button> (" + esc(lab.toLowerCase()) + ")"; }).filter(Boolean);
+  return items.length ? '<p class="deps">Links to ' + items.join(", ") + ". Sends after " + (items.length === 1 ? "it" : "them") + ".</p>" : "";
+}
+function resultHTML(step){
+  const e = ex(step.id); if (!e) return "";
+  const sname = step.sys ? step.sys.name : step.system;
+  if (e.state === "sending") return '<div class="result sending">Sending to ' + esc(sname) + "…</div>";
+  if (e.state === "queued") return '<div class="result queued"><b>Queued.</b> ' + esc(e.error) + " It will retry when the system is back.</div>";
+  if (e.state === "waiting") return '<div class="result waiting"><b>Waiting.</b> Sends after ' + (e.waitFor || []).map(id => "#" + numMap[id]).join(", ") + " " + ((e.waitFor || []).length === 1 ? "is" : "are") + " sent.</div>";
+  if (e.state === "failed") return '<div class="result failed"><b>Rejected by ' + esc(sname) + ".</b> " + esc(e.error) + " Fix the values below and send again.</div>";
+  if (e.state === "sent"){
+    if (step.def && step.def.action === "check"){
+      const p = e.result && e.result.permit;
+      if (!p) return '<div class="result failed"><b>No active permit matches.</b> Ask the contractor to show their permit before work continues.</div>';
+      return '<div class="result sent"><span class="rid">' + esc(p.id) + '</span><span>Active permit: ' + esc(p.contractor) + " · " + esc(p.work) + " · " + esc(p.location) + " · valid " + esc(p.valid) + "</span>" + (p.conditions && p.conditions.length ? "<span>Conditions: " + p.conditions.map(esc).join("; ") + "</span>" : "") + "</div>";
+    }
+    const links = step.links.map(l => plan.ids[l.from] ? esc(((step.def.fields.find(x => x.key === l.field) || {}).label || l.field)) + " " + esc(plan.ids[l.from]) : "").filter(Boolean);
+    return '<div class="result sent"><span class="rid">' + esc(e.id) + "</span><span>Created in " + esc(sname) + " at " + hhmm(e.at) + (e.duplicate ? ". It was already received, so the same ID came back." : ".") + "</span>" + (links.length ? "<span>Linked: " + links.join(", ") + "</span>" : "") + "</div>";
+  }
+  return "";
+}
+function footHTML(step){
+  const st = stepState(step);
+  if (st === "sent" || st === "sending") return "";
+  if (st === "queued" || st === "waiting") return '<div class="sfoot"><span class="ready">Will send automatically.</span></div>';
+  if (st === "failed") return '<div class="sfoot"><span class="ready">' + (missing(step).length ? "Needs " + missing(step).map(f => f.def.label.toLowerCase()).join(", ") : "Fixed? Press Send.") + '</span><div class="btns"><button type="button" class="btn small" data-act="skip">Skip</button></div></div>';
+  if (st === "approved") return '<div class="sfoot"><span class="ready yes">Approved. Sends with the plan.</span><div class="btns"><button type="button" class="btn small" data-act="reopen">Reopen</button></div></div>';
+  if (st === "skipped") return '<div class="sfoot"><span class="ready">Skipped. Will not be sent.</span><div class="btns"><button type="button" class="btn small" data-act="reopen">Reopen</button></div></div>';
+  if (!step.def) return '<div class="sfoot"><span class="ready">Cannot be sent: unknown record type.</span><div class="btns"><button type="button" class="btn small" data-act="skip">Skip</button></div></div>';
+  const miss = missing(step), dec = decisionsOpen(step);
+  let msg = miss.length ? "Needs " + miss.map(f => f.def.label.toLowerCase()).join(", ") : "Ready to approve";
+  if (!miss.length && dec.length) msg += " · " + plural(dec.length, "decision") + " still open";
+  return '<div class="sfoot"><span class="ready' + (miss.length ? "" : " yes") + '">' + esc(msg) + '</span><div class="btns"><button type="button" class="btn small" data-act="skip">Skip</button><button type="button" class="btn small ok" data-act="approve"' + (miss.length ? " disabled" : "") + ">Approve</button></div></div>";
+}
+function fieldsHTML(step){
+  if (!step.def) return "";
+  const nonLink = step.fields.filter(f => f.def.kind !== "link");
+  const filled = nonLink.filter(f => !isEmptyVal(effVal(step, f))).length;
+  const notes = step.fields.some(f => ["unsupported","invalid","ungrounded","decision","approx"].includes(f.status));
+  const open = missing(step).length || notes || stepState(step) === "failed";
+  const miss = missing(step).length;
+  return '<details class="fw"' + (open ? " open" : "") + "><summary>" + plural(nonLink.length, "field") + " · " + filled + " filled" + (miss ? " · " + miss + " needed" : "") + '</summary><div class="fields">' + step.fields.map(f => fieldHTML(step, f)).join("") + "</div></details>";
+}
+function questionsHTML(step){
+  if (!step.questions.length) return "";
+  const r = rv(step.id), dis = canEdit(step) ? "" : " disabled";
+  return '<div class="qs"><div class="qh">Follow-up questions</div>' + step.questions.map((q, i) => '<div class="q"><label for="q-' + esc(step.id) + "-" + i + '">' + esc(q) + '</label><input id="q-' + esc(step.id) + "-" + i + '" class="ctl" data-sid="' + esc(step.id) + '" data-qi="' + i + '" value="' + esc(r.answers[i] || "") + '" placeholder="Answer now, or leave it for later"' + dis + "></div>").join("") + "</div>";
+}
+function stepHTML(step){
+  const st = stepState(step);
+  const cls = ["step", "st-" + rv(step.id).status, ex(step.id) ? "ex-" + ex(step.id).state : ""].join(" ");
+  const verb = step.def ? step.def.verb + " · " + step.def.label : "Unknown record type";
+  return '<article class="' + cls + '" id="st-' + esc(step.id) + '" data-sid="' + esc(step.id) + '">'
+    + '<div class="shead"><span class="num">' + numMap[step.id] + '</span><div class="stitle"><div class="verb"><span class="sys sys-' + esc(step.system) + '" title="' + esc(step.sys ? step.sys.name : "") + '">' + esc(step.sys ? step.sys.code : "?") + "</span>" + esc(verb) + (step.by === "Rule" ? '<span class="by">added by a rule</span>' : "") + "</div><h3>" + esc(step.title) + '</h3></div><span class="pill ' + st + '">' + PILL[st] + "</span></div>"
+    + flagsHTML(step) + depsHTML(step) + resultHTML(step) + fieldsHTML(step) + questionsHTML(step) + footHTML(step) + "</article>";
+}
+function alertHTML(){
+  const alerts = chk.steps.filter(s => s.system === "alerts" && s.flags.some(f => f.kind === "fast_lane"));
+  if (!alerts.length) return "";
+  const open = alerts.filter(s => !["sent","skipped"].includes(stepState(s)));
+  const terms = chk.fastTerms.length ? "The capture mentions " + chk.fastTerms.map(t => "“" + esc(t) + "”").join(", ") + ". " : "";
+  if (!open.length){
+    const sent = alerts.filter(s => stepState(s) === "sent");
+    return sent.length ? '<div class="result sent"><b>Immediate alert sent.</b> ' + sent.map(s => esc(ex(s.id).id) + " at " + hhmm(ex(s.id).at)).join(", ") + "</div>" : "";
+  }
+  return '<div class="alert" role="region" aria-label="Possible serious event"><h3>Possible serious event</h3><p>' + terms + "Send the immediate alert now, then review the rest of the plan.</p>"
+    + open.map(s => { const miss = missing(s), st = stepState(s);
+      return '<div class="row">' + (st === "queued" || st === "sending" ? '<span class="note">' + (st === "queued" ? "Alert queued: the alert system is offline." : "Sending…") + "</span>" : '<button type="button" class="btn danger" data-fast="' + esc(s.id) + '"' + (miss.length || sending ? " disabled" : "") + ">Send alert now</button>") + '<button type="button" class="link" data-goto="' + esc(s.id) + '">' + (miss.length ? "Needs " + esc(miss.map(f => f.def.label.toLowerCase()).join(", ")) : "Review it first") + "</button></div>"; }).join("")
+    + "</div>";
+}
+function summaryHTML(){
+  const steps = chk.steps;
+  const approved = steps.filter(s => rv(s.id).status === "approved").length;
+  const qOpen = steps.filter(s => rv(s.id).status !== "skipped").reduce((n, s) => n + s.questions.filter((q, i) => !(rv(s.id).answers[i] || "").trim()).length, 0);
+  const dec = steps.filter(s => rv(s.id).status !== "skipped").reduce((n, s) => n + decisionsOpen(s).length, 0);
+  const removed = chk.log.unsupported + chk.log.invalid + chk.log.ungrounded + chk.log.decisions;
+  const cov = chk.coverage.total ? Math.round(100 * chk.coverage.covered / chk.coverage.total) : 100;
+  const anySent = Object.keys(plan.exec).length > 0;
+  const nf = plan.injected ? plan.injected.faults.length : 4;
+  return '<div class="card summary"><div class="recbadge"><b>' + (plan.source === "live" ? "Live from Claude" : "Recorded AI result") + "</b><span>Built " + hhmm(plan.at) + "</span></div>"
+    + "<h2>" + esc(plan.title) + "</h2>"
+    + '<div class="row">' + systemsUsed().map(id => { const s = systemById(id); return '<span class="sys sys-' + esc(id) + '" title="' + esc(s.name) + '">' + esc(s.code) + "</span>"; }).join("") + "</div>"
+    + '<div class="stats"><span><b>' + steps.length + "</b> steps</span><span><b>" + chk.events.length + "</b> events</span><span><b>" + approved + "</b> approved</span><span><b>" + sentCount() + "</b> sent</span><span><b>" + qOpen + "</b> open " + (qOpen === 1 ? "question" : "questions") + "</span><span><b>" + dec + "</b> " + (dec === 1 ? "decision" : "decisions") + " for a person</span><span><b>" + removed + "</b> " + (removed === 1 ? "value" : "values") + " removed by checks</span><span><b>" + cov + "%</b> of sentences used</span></div>"
+    + '<div class="row"><button type="button" class="btn small" id="inject"' + (anySent ? " disabled" : "") + ">" + (plan.injected ? "Remove the test mistakes" : "Test the checks: add " + nf + " AI mistakes") + '</button><button type="button" class="btn small" data-tab-go="capture">New capture</button></div>'
+    + (anySent && !plan.injected ? '<p class="note">The mistake test is available before anything is sent.</p>' : "")
+    + "</div>";
+}
+function injectHTML(){
+  if (!plan.injected) return "";
+  const f = plan.injected.faults, caught = f.filter(x => x.caught).length;
+  return '<div class="inject"><b>' + plural(f.length, "mistake") + " added to the AI draft. The checks caught " + caught + " of " + f.length + ".</b><ul>"
+    + f.map(x => '<li class="' + (x.caught ? "" : "miss") + '"><span class="mk">' + (x.caught ? "✓ caught" : "✗ missed") + "</span>" + esc(x.what) + ' · <button type="button" class="link" data-goto="' + esc(x.sid) + '">see #' + (numMap[x.sid] || "?") + "</button></li>").join("") + "</ul></div>";
+}
+function capturedHTML(){
+  const media = plan.input.media || [];
+  const srcs = chk.sources.map(s => {
+    const m = media.find(x => x.id === s.id);
+    const label = s.id === "notes" ? (plan.scenario && SCENARIOS.find(x => x.id === plan.scenario && x.voice) ? "Voice note transcript" : "Notes") : s.label + " · what the AI read. Check it against the image.";
+    return '<div><div class="src-label">' + esc(label) + "</div>" + (m && m.thumb ? '<div class="src-thumbs"><img src="' + esc(m.thumb) + '" alt="' + esc(m.label) + '"></div>' : "") + '<div class="paper">' + (s.text ? renderSource(s.text, chk.intervals.filter(v => v.src === s.id)) : '<span class="muted">No notes.</span>') + "</div></div>";
+  }).join("");
+  const nr = chk.notRecorded.length ? '<div><div class="src-label" style="margin-top:6px">Left out on purpose</div><ul class="leftout">' + chk.notRecorded.map(x => "<li>“" + esc(x.quote) + "”" + (x.reason ? " · " + esc(x.reason) : "") + (x.found ? "" : ' <span class="muted">(quote not found)</span>') + "</li>").join("") + "</ul></div>" : "";
+  const gaps = chk.coverage.total - chk.coverage.covered;
+  return '<details class="captured" id="captured"' + (gaps ? " open" : "") + "><summary>Your capture, marked up" + (gaps ? " · " + plural(gaps, "sentence") + " not used" : "") + "</summary>"
+    + '<div class="legend"><span><i class="sw ev"></i>Used in a step</span><span><i class="sw gap"></i>Not used in any step</span><span><i class="sw skip"></i>Left out on purpose</span><span><i class="sw fast"></i>Serious-event word</span></div>'
+    + '<div class="sources" style="margin-top:10px">' + srcs + "</div>" + nr + "</details>";
+}
+function displayOrder(){
+  const ordered = chk.order.map(stepById).filter(Boolean);
+  const evs = chk.events.filter(e => e && e.id);
+  const groups = evs.map(e => ({e, steps:ordered.filter(s => s.event === String(e.id))}));
+  const known = new Set(evs.map(e => String(e.id)));
+  const rest = ordered.filter(s => !known.has(s.event));
+  if (rest.length) groups.push({e:{id:"", summary:evs.length ? "Other steps" : "Steps"}, steps:rest});
+  return groups.filter(g => g.steps.length);
+}
+function renderPlan(){
+  const box = $("#plan");
+  if (!plan || !chk){
+    box.innerHTML = '<div class="empty"><h3>No plan yet</h3><p>Choose a demo scenario or describe what you saw, then press <b>Build the plan</b>.</p><div><button type="button" class="btn primary" data-tab-go="capture">Go to Capture</button></div></div>';
+    renderDock(); renderBadge(); return;
+  }
+  const groups = displayOrder(); numMap = {}; let n = 0;
+  groups.forEach(g => g.steps.forEach(s => { numMap[s.id] = ++n; }));
+  let html = '<div id="alert-slot" style="display:contents">' + alertHTML() + '</div><div id="summary-slot" style="display:contents">' + summaryHTML() + "</div>" + injectHTML() + capturedHTML();
+  groups.forEach((g, i) => {
+    html += '<section class="event"><div class="event-h"><span class="chip k-plain">' + (g.e.id ? "Event " + (i + 1) : "More") + "</span><p>" + esc(g.e.summary || "") + "</p></div>" + g.steps.map(stepHTML).join("") + "</section>";
+  });
+  box.innerHTML = '<div class="view">' + html + "</div>";
+  renderDock(); renderBadge();
+}
+function rerenderStep(sid){
+  const s = stepById(sid), el = $("#st-" + CSS.escape(sid));
+  if (s && el) el.outerHTML = stepHTML(s);
+}
+function refreshTop(){
+  const a = $("#alert-slot"), b = $("#summary-slot");
+  if (a) a.innerHTML = alertHTML();
+  if (b) b.innerHTML = summaryHTML();
+}
+function renderBadge(){
+  const b = $("#plan-badge");
+  const n = plan && chk ? chk.steps.filter(s => rv(s.id).status === "draft" && !ex(s.id)).length : 0;
+  b.hidden = !n; b.textContent = n;
+}
+function renderDock(){
+  const d = $("#dock");
+  if (tab !== "plan" || !plan || !chk){ d.hidden = true; return; }
+  const steps = chk.steps;
+  const toSend = steps.filter(s => rv(s.id).status === "approved" && (!ex(s.id) || ["failed","queued","waiting"].includes(ex(s.id).state)));
+  const ready = steps.filter(s => rv(s.id).status === "draft" && !ex(s.id) && isReady(s));
+  const needs = steps.filter(s => rv(s.id).status === "draft" && !ex(s.id) && !isReady(s));
+  const sent = sentCount(), skipped = steps.filter(s => rv(s.id).status === "skipped").length;
+  d.hidden = false;
+  if (sent + skipped === steps.length && !sending){
+    $("#dock-info").textContent = "Done: " + sent + " sent" + (skipped ? ", " + skipped + " skipped" : "") + ". See them in Systems.";
+    $("#approve-ready").hidden = true; $("#send").textContent = "Open Systems"; $("#send").disabled = false; $("#send").dataset.go = "systems"; return;
+  }
+  $("#send").dataset.go = "";
+  $("#approve-ready").hidden = false;
+  $("#dock-info").textContent = [toSend.length + " to send", ready.length ? ready.length + " ready" : "", needs.length ? needs.length + " need input" : "", sent ? sent + " sent" : ""].filter(Boolean).join(" · ");
+  $("#approve-ready").disabled = !ready.length || sending;
+  $("#approve-ready").textContent = ready.length ? "Approve " + ready.length + " ready" : "Approve ready";
+  $("#send").disabled = !toSend.length || sending;
+  $("#send").textContent = sending ? "Sending…" : toSend.length ? "Send " + toSend.length : "Send";
+}
+
+/* ===== Plan interactions ===== */
+function readCtl(el, f){
+  const raw = el.value;
+  if (raw === "") return null;
+  if (f.def.kind === "number"){ const n = Number(raw); return isFinite(n) ? n : raw; }
+  return raw;
+}
+function liveUpdate(step){
+  const el = $("#st-" + CSS.escape(step.id)); if (!el) return;
+  const foot = $(".sfoot", el);
+  if (foot){ const t = document.createElement("div"); t.innerHTML = footHTML(step); if (t.firstChild) foot.replaceWith(t.firstChild); }
+  const r = plan.review[step.id];
+  $$(".frow[data-key]", el).forEach(row => {
+    const f = step.fields.find(x => x.key === row.dataset.key); if (!f) return;
+    row.classList.toggle("missing", !!(f.def.required && isEmptyVal(effVal(step, f))));
+    const isEd = !!(r && has(r.values, f.key) && fmt(r.values[f.key]) !== fmt(f.value)), tag = $(".edited", row);
+    if (isEd && !tag) $(".flabel", row).insertAdjacentHTML("beforeend", '<span class="edited">edited</span>');
+    if (!isEd && tag) tag.remove();
+  });
+  renderDock();
+}
+$("#plan").addEventListener("input", e => {
+  const c = e.target.closest("[data-sid]"); if (!c || !plan) return;
+  const step = stepById(c.dataset.sid); if (!step || !canEdit(step)) return;
+  if (c.dataset.f){ const f = step.fields.find(x => x.key === c.dataset.f); if (!f) return; rv(step.id).values[f.key] = readCtl(c, f); liveUpdate(step); }
+  else if (c.dataset.qi !== undefined){ rv(step.id).answers[c.dataset.qi] = c.value; }
+});
+$("#plan").addEventListener("change", e => {
+  const c = e.target.closest("[data-sid]"); if (!c || !plan) return;
+  savePlan();
+  const step = stepById(c.dataset.sid);
+  if (step && c.dataset.f){ liveUpdate(step); refreshTop(); }
+});
+$("#plan").addEventListener("click", e => {
+  const t = e.target;
+  const act = t.closest("[data-act]");
+  if (act){ const el = act.closest("[data-sid]"); if (el) stepAction(el.dataset.sid, act.dataset.act); return; }
+  const q = t.closest("button.evq[data-q]"); if (q){ showEvidence(q.dataset.q); return; }
+  const m = t.closest("mark.ev"); if (m){ showSteps((m.dataset.r || "").split(" ")); return; }
+  const g = t.closest("[data-goto]"); if (g){ goStep(g.dataset.goto); return; }
+  const fst = t.closest("[data-fast]"); if (fst){ sendFast(fst.dataset.fast); return; }
+  if (t.closest("#inject")) toggleInject();
+});
+function stepAction(sid, act){
+  const step = stepById(sid); if (!step) return;
+  const r = rv(sid), n = numMap[sid];
+  if (act === "approve"){
+    if (!isReady(step)) return;
+    r.status = "approved";
+    const ed = editsCount(step), ans = Object.values(r.answers).filter(a => (a || "").trim()).length;
+    addLog("Approved #" + n + " “" + step.title + "”" + (ed ? " with " + plural(ed, "edit") : "") + (ans ? (ed ? " and " : " with ") + plural(ans, "answer") : "") + ".", "review");
+  } else if (act === "skip"){
+    r.status = "skipped"; if (ex(sid) && ex(sid).state === "failed") delete plan.exec[sid];
+    addLog("Skipped #" + n + " “" + step.title + "”.", "review");
+  } else if (act === "reopen"){
+    r.status = "draft"; addLog("Reopened #" + n + ".", "review");
+  }
+  savePlan(); rerenderStep(sid); refreshTop(); renderDock(); renderBadge();
+}
+function goStep(sid){ const el = $("#st-" + CSS.escape(sid)); if (el){ scrollToEl(el); flash(el); } }
+function showEvidence(qid){
+  const det = $("#captured"); if (det) det.open = true;
+  $$("mark.ev.on").forEach(m => m.classList.remove("on"));
+  const ms = $$("mark.ev").filter(m => (m.dataset.q || "").split(" ").includes(qid));
+  ms.forEach(m => m.classList.add("on"));
+  if (ms[0]) scrollToEl(ms[0]); else toast("That quote is not in the capture.");
+}
+function showSteps(ids){
+  $$(".step.hl").forEach(s => s.classList.remove("hl"));
+  const els = ids.map(id => $("#st-" + CSS.escape(id))).filter(Boolean);
+  els.forEach(el => el.classList.add("hl"));
+  if (els[0]){ scrollToEl(els[0]); setTimeout(() => els.forEach(el => el.classList.remove("hl")), 2600); }
+}
+function toggleInject(){
+  if (!plan || Object.keys(plan.exec).length) return;
+  if (plan.injected){ plan.injected = null; addLog("Removed the test mistakes.", "test"); }
+  else {
+    plan.injected = injectFaults(plan.raw);
+    plan.injected.faults.forEach(f => { delete plan.review[f.sid]; });
+    addLog("Added " + plural(plan.injected.faults.length, "deliberate AI mistake") + " to test the checks.", "test");
+  }
+  recompute();
+  if (plan.injected){ const c = plan.injected.faults.filter(f => f.caught).length; addLog("Checks caught " + c + " of " + plan.injected.faults.length + " test mistakes.", "test"); }
+  savePlan(); renderPlan();
+  const box = $(".inject"); if (box) scrollToEl(box);
+}
+$("#approve-ready").addEventListener("click", () => {
+  if (!plan || !chk || sending) return;
+  const ready = chk.steps.filter(s => rv(s.id).status === "draft" && !ex(s.id) && isReady(s));
+  ready.forEach(s => { rv(s.id).status = "approved"; });
+  if (ready.length) addLog("Approved " + plural(ready.length, "ready step") + ": " + ready.map(s => "#" + numMap[s.id]).join(", ") + ".", "review");
+  savePlan(); renderPlan();
+});
+$("#send").addEventListener("click", () => { if ($("#send").dataset.go){ showTab($("#send").dataset.go); return; } sendPlan(null); });
+function sendFast(sid){
+  const step = stepById(sid); if (!step || !isReady(step) || sending) return;
+  rv(sid).status = "approved";
+  addLog("Immediate alert #" + numMap[sid] + " approved and sent ahead of the plan.", "fast");
+  sendPlan([sid]);
+}
+
+/* ===== Sending ===== */
+async function sendPlan(only){
+  if (!plan || !chk || sending) return;
+  sending = true; renderDock();
+  const targets = chk.order.map(stepById).filter(s => s && (!only || only.includes(s.id)) && rv(s.id).status === "approved" && (!ex(s.id) || ["failed","queued","waiting"].includes(ex(s.id).state)));
+  const tally = {sent:0, queued:0, failed:0, waiting:0};
+  for (const s of targets){
+    const blockers = s.links.map(l => stepById(l.from)).filter(d => d && rv(d.id).status !== "skipped" && !(ex(d.id) && ex(d.id).state === "sent"));
+    if (blockers.length){
+      plan.exec[s.id] = {state:"waiting", waitFor:blockers.map(b => b.id), at:now()}; tally.waiting++;
+      rerenderStep(s.id); continue;
+    }
+    plan.exec[s.id] = {state:"sending", at:now()}; rerenderStep(s.id);
+    await sleep(reduceMotion ? 0 : 300);
+    const res = mockSend(sys, s, valuesFor(s), plan.id + ":" + s.id, now());
+    const n = "#" + numMap[s.id], sname = s.sys ? s.sys.name : s.system;
+    if (res.ok){
+      plan.exec[s.id] = {state:"sent", id:res.id, result:res.result || null, duplicate:!!res.duplicate, at:now()};
+      if (!(s.def.action === "check" && !(res.result && res.result.found))) plan.ids[s.id] = res.id;
+      tally.sent++;
+      const links = s.links.filter(l => plan.ids[l.from]).map(l => plan.ids[l.from]);
+      if (s.def.action === "check") addLog(n + " checked " + sname + ": " + (res.result && res.result.found ? "found active permit " + res.id + "." : "no matching permit."), "sent");
+      else addLog(n + " sent to " + sname + " as " + res.id + (links.length ? ", linked to " + links.join(", ") : "") + ".", "sent");
+    } else if (res.code === 503){
+      plan.exec[s.id] = {state:"queued", error:res.error, at:now()}; tally.queued++;
+      addLog(n + " queued: " + res.error, "queued");
+    } else {
+      plan.exec[s.id] = {state:"failed", error:res.error, code:res.code, at:now()}; tally.failed++;
+      addLog(n + " rejected by " + sname + " (" + res.code + "): " + res.error, "failed");
+    }
+    saveSys(); rerenderStep(s.id);
+  }
+  /* Steps that were waiting on something sent just now can go too. */
+  const unblocked = chk.order.map(stepById).filter(s => s && ex(s.id) && ex(s.id).state === "waiting" && s.links.every(l => { const d = stepById(l.from); return !d || rv(d.id).status === "skipped" || (ex(d.id) && ex(d.id).state === "sent"); }));
+  sending = false; savePlan();
+  if (unblocked.length && tally.sent){ return sendPlan(unblocked.map(s => s.id)); }
+  renderPlan();
+  const parts = [];
+  if (tally.sent) parts.push(tally.sent + " sent");
+  if (tally.queued) parts.push(tally.queued + " queued");
+  if (tally.waiting) parts.push(tally.waiting + " waiting");
+  if (tally.failed) parts.push(tally.failed + " rejected");
+  if (parts.length) toast(parts.join(" · "));
+}
+
+/* ===== Systems ===== */
+function recHTML(sd, r){
+  const def = objectDef(sd.id, r.object);
+  const kv = def ? def.fields.filter(f => f.kind !== "link" && !isEmptyVal(r.values[f.key]) && f.policy !== "restricted").slice(0, 4).map(f => "<span>" + esc(f.label) + ": " + esc(r.values[f.key]) + "</span>").join("") : "";
+  const restricted = def ? def.fields.filter(f => f.policy === "restricted" && !isEmptyVal(r.values[f.key])).length : 0;
+  const links = def ? def.fields.filter(f => f.kind === "link" && r.values[f.key]).map(f => "<span>" + esc(f.label) + " → " + esc(r.values[f.key]) + "</span>").join("") : "";
+  const fu = Array.isArray(r.values._followup) ? r.values._followup.map(x => esc(x.q) + " " + esc(x.a)).join(" · ") : "";
+  return '<li class="rec"><span class="rid">' + esc(r.id) + '</span><span class="rt">' + esc(r.title) + '</span><span class="rv">' + esc(r.label) + " · " + hhmm(r.at) + (restricted ? " · " + plural(restricted, "restricted field") + " held separately" : "") + '</span><span class="rv kv">' + kv + "</span>" + (links ? '<span class="lk">' + links + "</span>" : "") + (fu ? '<span class="rv">Follow-up: ' + fu + "</span>" : "") + "</li>";
+}
+function renderSystems(){
+  $("#systems").innerHTML = SYSTEMS.map(sd => {
+    const st = sys[sd.id];
+    const permits = sd.id === "ptw" ? '<div class="permits"><b>Active permits</b>' + st.permits.map(p => "<div><span class=\"rid\" style=\"font-family:var(--f-mono)\">" + esc(p.id) + "</span> · " + esc(p.contractor) + " · " + esc(p.location) + " · " + esc(p.work) + " · valid " + esc(p.valid) + "</div>").join("") + "</div>" : "";
+    const recs = st.records.length ? '<ul class="recs">' + st.records.map(r => recHTML(sd, r)).join("") + "</ul>" : '<p class="note">' + (sd.id === "ptw" ? "No permit checks yet." : "No records from Walkdown yet.") + "</p>";
+    return '<div class="syscard"><div class="syshead"><span class="sys sys-' + esc(sd.id) + '">' + esc(sd.code) + "</span><h3>" + esc(sd.name) + '<span class="note">' + esc(sd.about) + '</span></h3><label class="toggle"><input type="checkbox" data-sys="' + esc(sd.id) + '"' + (st.down ? "" : " checked") + '><span class="tr"></span><span>' + (st.down ? "Offline" : "Online") + "</span></label></div>" + permits + recs + "</div>";
+  }).join("");
+}
+$("#systems").addEventListener("change", e => {
+  const c = e.target.closest("[data-sys]"); if (!c) return;
+  const id = c.dataset.sys, sd = systemById(id);
+  sys[id].down = !c.checked; saveSys();
+  addLog(sd.name + (sys[id].down ? " went offline (simulated outage)." : " is back online."), "system");
+  renderSystems();
+  if (!sys[id].down && plan && chk){
+    const retry = chk.steps.filter(s => ex(s.id) && ["queued","waiting"].includes(ex(s.id).state)).map(s => s.id);
+    if (retry.length){ toast(sd.name + " is back. Retrying " + plural(retry.length, "step") + "."); addLog("Retrying " + plural(retry.length, "queued step") + ".", "system"); sendPlan(retry).then(() => { if (tab === "systems") renderSystems(); }); }
+  }
+});
+$("#reset-sys").addEventListener("click", () => {
+  sys = newSystemsState(); saveSys();
+  if (plan){ plan.exec = {}; plan.ids = {}; savePlan(); }
+  addLog("All systems reset. Sent steps in the plan are back to approved.", "system");
+  renderSystems(); renderBadge(); toast("Systems reset.");
+});
+
+/* ===== Activity ===== */
+function renderLog(){
+  $("#log").innerHTML = logs.length ? logs.map(l => '<li><time>' + hhmm(l.at) + "</time><span>" + esc(l.text) + "</span></li>").join("") : '<li><time></time><span class="muted">Nothing yet. Build a plan to start the trail.</span></li>';
+}
+$("#clear-log").addEventListener("click", () => { logs = []; store("wd2.log", logs); renderLog(); });
+
+/* ===== About ===== */
+function renderAbout(){
+  const links = [];
+  if (mode !== "live" && CONFIG.claudeUrl) links.push('<a class="btn primary" href="' + esc(CONFIG.claudeUrl) + '" target="_blank" rel="noopener">Try it live in Claude</a>');
+  if (mode === "live" && CONFIG.publicUrl) links.push('<a class="btn" href="' + esc(CONFIG.publicUrl) + '" target="_blank" rel="noopener">Public demo link</a>');
+  if (CONFIG.repoUrl) links.push('<a class="btn" href="' + esc(CONFIG.repoUrl) + '" target="_blank" rel="noopener">Source on GitHub</a>');
+  links.push('<button type="button" class="btn" id="about-fb">Give feedback</button>');
+  $("#about-links").innerHTML = links.join("");
+  $("#about-by").innerHTML = '<a href="' + esc(CONFIG.author.url) + '" target="_blank" rel="noopener">' + esc(CONFIG.author.name) + "</a>";
+}
+$("#about-links").addEventListener("click", e => { if (e.target.closest("#about-fb")) openFb(); });
+
+/* ===== Feedback ===== */
+let fbRate = 0;
+function renderRate(){ $("#fb-rate").innerHTML = [1,2,3,4,5].map(n => '<button type="button" data-rate="' + n + '" aria-pressed="' + (fbRate === n) + '">' + n + "</button>").join(""); }
+function openFb(){ renderRate(); $("#fb").hidden = false; $("#fb-err").textContent = ""; $("#fb-out").hidden = true; $("#fb-role").focus(); }
+function closeFb(){ $("#fb").hidden = true; $("#fb-open").focus(); }
+$("#fb-open").addEventListener("click", openFb);
+$("#fb-close").addEventListener("click", closeFb);
+$("#fb").addEventListener("click", e => { if (e.target === $("#fb")) closeFb(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#fb").hidden) closeFb(); });
+$("#fb-rate").addEventListener("click", e => { const b = e.target.closest("[data-rate]"); if (!b) return; fbRate = Number(b.dataset.rate); renderRate(); $("[data-rate=\"" + fbRate + "\"]").focus(); });
+$("#fb-send").addEventListener("click", () => {
+  const text = $("#fb-text").value.trim();
+  if (!fbRate && !text){ $("#fb-err").textContent = "Pick a rating or write a comment first."; return; }
+  $("#fb-err").textContent = "";
+  const ctx = "Mode: " + (mode === "live" ? "live in Claude" : "demo") + (plan && chk ? " · Last plan: " + (plan.scenario || "own capture") + ", " + chk.steps.length + " steps, " + sentCount() + " sent" : "");
+  const body = "**Role:** " + $("#fb-role").value + "\n**Usefulness:** " + (fbRate ? fbRate + " / 5" : "not rated") + "\n\n**Comments:**\n" + (text || "(none)") + "\n\n---\n" + ctx;
+  const title = "Feedback: " + (fbRate ? fbRate + "/5 · " : "") + $("#fb-role").value;
+  const url = CONFIG.feedbackUrl + "?title=" + encodeURIComponent(title) + "&body=" + encodeURIComponent(body);
+  const out = $("#fb-out");
+  out.innerHTML = '<a class="btn primary" href="' + esc(url) + '" target="_blank" rel="noopener">Post it on GitHub</a><button type="button" class="btn" id="fb-copy">Copy the text</button><p class="note" style="flex-basis:100%">Posting needs a free GitHub account and is public. No account? Copy the text and send it to the author.</p><textarea class="ctl fbtext" readonly aria-label="Feedback text">' + esc(title + "\n\n" + body) + "</textarea>";
+  out.hidden = false;
+});
+$("#fb-out").addEventListener("click", async e => {
+  if (!e.target.closest("#fb-copy")) return;
+  const ta = $(".fbtext", $("#fb-out"));
+  try { await navigator.clipboard.writeText(ta.value); toast("Copied."); }
+  catch (err) { ta.focus(); ta.select(); toast("Selected. Copy it with your keyboard or the share menu."); }
+});
+
+/* ===== Start ===== */
+renderMode();
+showTab(load("wd2.tab", "capture"), true);
+detect();
+
+</script>
+</body>
+</html>

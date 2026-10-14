@@ -6,6 +6,8 @@ A safety professional describes what they saw on a floor walk the way they would
 
 **Live AI:** the same page runs inside Claude, where Claude reads your own notes, photos and video frames on your own Claude account. The link is private to the owner until it is shared.
 
+The page has two layers. The phone shows the product as a safety professional would use it. The demo panel (beside the phone on desktop, behind the **Demo** button on a phone) holds the scenarios, the simulated systems receiving records, the mistake test, and short notes on what to look at.
+
 This is an independent concept prototype. It is not affiliated with any EHS software vendor, and all names, companies and events are fictional. The five connected systems are mocks that run in the browser.
 
 ## What it shows

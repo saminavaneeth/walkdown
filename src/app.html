@@ -16,6 +16,7 @@
   --ok:#14744A; --ok-soft:#DFF1E7;
   --private:#5C4495; --private-soft:#ECE6F7;
   --btn:#17201D; --btn-ink:#FFFFFF;
+  --demo:#A1246B; --demo-soft:#FBE8F2; --stage:#DCE3E0; --bezel:#1B2220;
   --s-ehs:#1B5DAB; --s-cmms:#9A4A0B; --s-ptw:#6B3FA0; --s-lms:#0F6E56; --s-alerts:#B42229;
   --f-display:"Barlow Condensed","Arial Narrow","Roboto Condensed",sans-serif;
   --f-body:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,sans-serif;
@@ -32,6 +33,7 @@
     --ok:#73D3A2; --ok-soft:#14301F;
     --private:#BBA6EF; --private-soft:#2A2340;
     --btn:#E2E9E5; --btn-ink:#0F1513;
+    --demo:#F08CC0; --demo-soft:#3A1A2C; --stage:#090D0C; --bezel:#2E3835;
     --s-ehs:#86B3F0; --s-cmms:#F1A66C; --s-ptw:#BBA6EF; --s-lms:#6FD3B4; --s-alerts:#F28B8F;
     color-scheme:dark;
   }
@@ -45,6 +47,7 @@
   --ok:#73D3A2; --ok-soft:#14301F;
   --private:#BBA6EF; --private-soft:#2A2340;
   --btn:#E2E9E5; --btn-ink:#0F1513;
+  --demo:#F08CC0; --demo-soft:#3A1A2C; --stage:#090D0C; --bezel:#2E3835;
   --s-ehs:#86B3F0; --s-cmms:#F1A66C; --s-ptw:#BBA6EF; --s-lms:#6FD3B4; --s-alerts:#F28B8F;
   color-scheme:dark;
 }
@@ -65,8 +68,6 @@ button,input,select,textarea{font:inherit;color:inherit}
 .brand{flex:1;min-width:0}
 .brand h1{font:700 23px/1 var(--f-display);letter-spacing:.02em}
 .brand p{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mode{font:600 12px/1 var(--f-display);letter-spacing:.07em;text-transform:uppercase;padding:6px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
-.mode.live{background:var(--ok-soft);color:var(--ok);border-color:transparent}
 .icon-btn{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:7px 10px;font:700 13px/1 var(--f-body);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
 
 /* Main */
@@ -115,7 +116,6 @@ textarea.paper{resize:vertical;min-height:196px}
 .tile .cap{position:relative;background:linear-gradient(transparent,rgba(0,0,0,.62));color:#fff;padding:18px 7px 6px;font-size:11.5px;line-height:1.25}
 .tile .cap b{display:block;font:500 11px/1.2 var(--f-mono)}
 .tile .rm{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:50%;border:0;background:var(--ink);color:var(--surface);cursor:pointer;font-size:15px;line-height:26px;padding:0}
-.tile .demo-tag{position:absolute;top:5px;left:5px;font:500 10.5px/1 var(--f-mono);background:var(--surface);color:var(--muted);padding:3px 4px;border-radius:3px}
 .adds{display:flex;flex-wrap:wrap;gap:8px}
 .file-btn{position:relative;overflow:hidden}
 .file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
@@ -248,7 +248,7 @@ textarea.ctl{resize:vertical}
 .log time{font:500 12px/1.4 var(--f-mono);color:var(--muted)}
 
 /* About */
-.about{display:grid;gap:22px;max-width:68ch}
+.about{display:grid;gap:18px}
 .about .lead{font-size:17px;line-height:1.55}
 .about p{line-height:1.6}
 .about ul{margin:6px 0 0;padding-left:20px;display:grid;gap:5px;line-height:1.5}
@@ -260,7 +260,7 @@ textarea.ctl{resize:vertical}
 
 /* Nav */
 .nav{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
-.nav .col{display:grid;grid-template-columns:repeat(5,1fr);height:var(--nav-h)}
+.nav .col{display:grid;grid-template-columns:repeat(3,1fr);height:var(--nav-h)}
 .nav button{appearance:none;background:none;border:0;cursor:pointer;display:grid;justify-items:center;align-content:center;gap:3px;color:var(--muted);font:600 11.5px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;position:relative}
 .nav button svg{width:22px;height:22px}
 .nav button[aria-current="page"]{color:var(--ink)}
@@ -290,15 +290,57 @@ textarea.ctl{resize:vertical}
 .fbtext{width:100%;min-height:120px;font:13px/1.45 var(--f-mono)}
 .flash{animation:flash 1.2s ease-out}
 @keyframes flash{0%{box-shadow:0 0 0 4px var(--marker)}100%{box-shadow:0 0 0 0 transparent}}
-@media (prefers-reduced-motion: reduce){.stages li.active .dot{animation:none;border-top-color:var(--ink)}.flash{animation:none;outline:2px solid var(--marker)}.step,.toggle .tr,.toggle .tr::after{transition:none}}
+/* Demo layer: everything outside the product. One look for all of it (magenta, diagonal stripes, mono label) so it never reads as product. */
+.demo-tag{font:600 11px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;background:var(--demo);color:var(--surface);padding:4px 6px;border-radius:3px;white-space:nowrap;flex:none}
+.demo-panel{background:repeating-linear-gradient(-45deg,var(--demo) 0 6px,transparent 6px 12px) top/100% 6px no-repeat,var(--surface);display:grid;gap:16px;align-content:start}
+.demo-head{display:flex;gap:10px;align-items:center}
+.demo-head h2{flex:1;min-width:0;font:700 21px/1.15 var(--f-display);letter-spacing:.04em;text-transform:uppercase}
+.demo-lead{font-size:14.5px;line-height:1.5}
+.demo-mode{border-left:3px solid var(--demo);background:var(--demo-soft);border-radius:0 6px 6px 0;padding:7px 10px;font-size:13.5px;line-height:1.45}
+.dsec{display:grid;gap:10px;padding-top:14px;border-top:1px dashed var(--line)}
+.dh{font:700 15.5px/1.2 var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--demo);margin:0}
+details.dsec>summary{cursor:pointer}
+details.dsec[open]>summary{margin-bottom:4px}
+.notice{background:var(--demo-soft);border-radius:var(--r);padding:10px 12px;display:grid;gap:6px;font-size:14px;line-height:1.45}
+.demo-note{border:1px dashed var(--demo);background:var(--demo-soft);border-radius:var(--r);padding:8px 10px;font-size:13px;line-height:1.45;display:flex;gap:8px;align-items:baseline}
+.demo-note .demo-tag{font-size:10px;padding:3px 4px}
+.log li.demo span:last-child{color:var(--muted)}
+.log li.demo .demo-tag{font-size:10px;padding:2px 4px;margin-right:6px;vertical-align:1px}
+.demo-fab{position:fixed;z-index:20;top:calc(env(safe-area-inset-top,0px) + 10px);right:max(16px,env(safe-area-inset-right,0px));appearance:none;border:1.5px solid var(--demo);background:var(--demo-soft);color:var(--demo);font:700 12.5px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;padding:8px 10px;border-radius:var(--r);display:inline-flex;gap:7px;align-items:center;cursor:pointer}
+.demo-stripe{width:14px;height:14px;border-radius:3px;background:repeating-linear-gradient(-45deg,var(--demo) 0 3px,transparent 3px 6px)}
+.demo-fab.pulse{animation:pulse 1.5s ease-out 2}
+@keyframes pulse{0%{box-shadow:0 0 0 0 var(--demo)}100%{box-shadow:0 0 0 12px transparent}}
+
+/* Phone: the product fills the screen; the demo panel is a bottom sheet. */
+@media (max-width:959.98px){
+  .top-in{padding-right:96px}
+  .demo-wrap{position:fixed;inset:0;z-index:30;background:rgba(10,14,12,.55);display:none;align-items:end;justify-items:center}
+  .demo-wrap.open{display:grid}
+  .demo-panel{width:100%;max-width:560px;max-height:88vh;overflow:auto;border-radius:14px 14px 0 0;padding:20px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+}
+@media (max-width:959.98px) and (min-width:600px){.demo-wrap{align-items:center}.demo-panel{border-radius:14px}}
+
+/* Desktop: the product runs in a phone frame, the demo panel sits beside it. */
+@media (min-width:960px){
+  body{background:var(--stage)}
+  .stage{display:grid;grid-template-columns:410px minmax(0,580px);gap:32px;justify-content:center;align-items:start;padding:24px}
+  .device{position:sticky;top:24px;width:410px;height:min(864px,calc(100vh - 48px));border:10px solid var(--bezel);border-radius:46px;overflow:hidden;transform:translateZ(0);background:var(--bg);box-shadow:0 18px 50px rgba(0,0,0,.18)}
+  .screen{height:100%;overflow-y:auto;overscroll-behavior:contain}
+  .demo-panel{border:1px solid var(--line);border-radius:12px;padding:22px 22px 20px}
+  .demo-fab,.demo-close{display:none}
+}
+
+@media (prefers-reduced-motion: reduce){.stages li.active .dot{animation:none;border-top-color:var(--ink)}.flash{animation:none;outline:2px solid var(--marker)}.step,.toggle .tr,.toggle .tr::after{transition:none}.demo-fab.pulse{animation:none}}
 </style>
 <!--/HEAD-->
+<div class="stage">
+<!-- PRODUCT: what a safety professional sees. Nothing demo-only goes in here except .demo-note hints. -->
+<div id="device" class="device">
+<div id="screen" class="screen">
 <header class="top gut">
   <div class="col top-in">
     <span class="tape" aria-hidden="true"></span>
     <div class="brand"><h1>Walkdown</h1><p>Field capture to linked EHS records</p></div>
-    <span id="mode" class="mode">Checking…</span>
-    <button type="button" class="icon-btn" id="fb-open">Feedback</button>
   </div>
 </header>
 
@@ -310,12 +352,8 @@ textarea.ctl{resize:vertical}
         <h2 class="sec" id="h-capture">New capture</h2>
         <p class="lead">Describe what you saw the way you would tell a colleague. Walkdown turns it into a plan of linked records across your EHS, maintenance, permit, training and alert systems. Nothing is sent until you approve it.</p>
       </div>
-      <div>
-        <div class="sec-h"><span class="eyebrow">Try a demo scenario</span></div>
-        <div class="scen" id="scen" style="margin-top:8px"></div>
-      </div>
       <div class="card composer" id="composer">
-        <div class="sec-h"><span class="eyebrow" id="comp-title">Your capture</span><button type="button" class="link" id="clear-draft">Clear</button></div>
+        <div class="sec-h"><span class="eyebrow">Your capture</span><button type="button" class="link" id="clear-draft">Clear</button></div>
         <div id="voice" class="voice" hidden></div>
         <label class="note" for="cap-text" id="cap-hint">Type, or tap the box and use your keyboard's microphone key to dictate.</label>
         <textarea id="cap-text" class="paper" placeholder="Example: Walked line 3. Guard on press 7 is missing a bolt, Mike in maintenance will fix it by end of shift…"></textarea>
@@ -326,24 +364,17 @@ textarea.ctl{resize:vertical}
           <label class="btn small file-btn" id="add-doc-l">Add document photo<input type="file" id="add-doc" accept="image/jpeg,image/png,image/webp"></label>
         </div>
         <p class="note" id="media-note"></p>
-        <p class="warnbox">Use made-up details. Do not enter real names or real injury information.</p>
         <div id="proc-msg" class="note" role="status" aria-live="polite"></div>
         <button type="button" id="process" class="btn primary block">Build the plan</button>
+        <div id="demo-inline"></div>
         <div id="stages-wrap" class="card" hidden><ul id="stages" class="stages"></ul><div class="row" style="margin-top:10px"><button type="button" class="btn small" id="stop" hidden>Stop</button><span id="stage-note" class="note"></span></div></div>
       </div>
     </section>
 
-    <!-- PLAN -->
-    <section id="v-plan" class="view" aria-labelledby="h-plan" hidden>
-      <h2 class="sec" id="h-plan">Plan</h2>
+    <!-- REVIEW -->
+    <section id="v-review" class="view" aria-labelledby="h-review" hidden>
+      <h2 class="sec" id="h-review">Review</h2>
       <div id="plan"></div>
-    </section>
-
-    <!-- SYSTEMS -->
-    <section id="v-systems" class="view" aria-labelledby="h-systems" hidden>
-      <div class="sec-h"><h2 class="sec" id="h-systems">Connected systems</h2><button type="button" class="btn small" id="reset-sys">Reset all systems</button></div>
-      <p class="note">These are mock systems that run in your browser. Each has its own record types, pick-lists and IDs, rejects invalid values, and can be switched off to simulate an outage.</p>
-      <div id="systems" class="sysgrid"></div>
     </section>
 
     <!-- ACTIVITY -->
@@ -352,67 +383,108 @@ textarea.ctl{resize:vertical}
       <p class="note">An audit trail of what the AI proposed, what you changed, and what each system received.</p>
       <ul id="log" class="log"></ul>
     </section>
-
-    <!-- ABOUT -->
-    <section id="v-about" class="view" aria-labelledby="h-about" hidden>
-      <div class="about">
-        <h2 class="sec" id="h-about">About Walkdown</h2>
-        <p class="lead">A safety professional sees a dozen things on a floor walk. Today each one is typed into a different system hours later, and the near misses, at-risk behaviors and spoken promises are what get lost. Walkdown takes one capture, in any form, and turns it into the right linked records across the systems a site already uses.</p>
-        <div>
-          <h2 class="sec">How a capture becomes a plan</h2>
-          <ol class="steps-list">
-            <li><div><b>Capture</b>Notes typed or dictated, photos, short video and photos of documents such as permits.</div></li>
-            <li><div><b>Read the media</b>Video is sampled into frames. The AI writes down what each photo, frame and document shows, including any written text.</div></li>
-            <li><div><b>Understand and plan</b>The AI splits the capture into events and proposes steps in each system: records, work orders, permit checks, training and alerts, with links between them.</div></li>
-            <li><div><b>Check</b>Rules in the app test every value before you see it. The list is below.</div></li>
-            <li><div><b>Review</b>You answer follow-up questions, fix values and approve or skip each step. Immediate alerts can go first.</div></li>
-            <li><div><b>Send</b>Steps go out in order. Each system's new ID is written into the records that depend on it, failures queue and retry, and every action is logged.</div></li>
-          </ol>
-        </div>
-        <div>
-          <h2 class="sec">Checks on every plan</h2>
-          <ul>
-            <li>Every value must quote the capture. If the quote is not there, the value is removed and you see what was suggested.</li>
-            <li>Values must come from each system's pick-lists and the site's location list.</li>
-            <li>Names and numbers must appear inside their own quote.</li>
-            <li>Severity, recordability, regulator reporting and priority are left for a person.</li>
-            <li>Behavior observations and training assignments never carry a worker's name.</li>
-            <li>Health details belong in restricted fields; anywhere else they are flagged.</li>
-            <li>Judging wording such as “careless” is flagged for a neutral rewrite.</li>
-            <li>A keyword rule backs up the AI on serious-injury precursors.</li>
-            <li>A scan of the raw capture raises an immediate alert for words like ambulance or hospital, even if the AI missed it.</li>
-            <li>Sentences that did not reach any step are underlined, so nothing drops out silently.</li>
-          </ul>
-        </div>
-        <div>
-          <h2 class="sec">What is real and what is mocked</h2>
-          <div class="real" style="margin-top:8px">
-            <div class="card"><b>Real</b><p class="note" style="margin-top:4px">The checks, the plan ordering, linking and retries, and the review flow run live. Inside Claude, the AI reads your own notes, photos and video frames.</p></div>
-            <div class="card"><b>Mocked</b><p class="note" style="margin-top:4px">The five systems are simulated in your browser. Outside Claude, the AI part of each demo scenario is a recorded result, replayed. Video sound is not transcribed yet.</p></div>
-          </div>
-        </div>
-        <div>
-          <h2 class="sec">Privacy</h2>
-          <p>In demo mode nothing leaves your browser. In live mode inside Claude, the capture goes to Claude on your own account. Records in the mock systems stay in this browser. Please use made-up details.</p>
-        </div>
-        <div id="about-links" class="row"></div>
-        <p class="note">Independent concept prototype by <span id="about-by"></span>. Not affiliated with any EHS software vendor. All names, companies and events are fictional.</p>
-      </div>
-    </section>
   </div>
 </main>
+</div>
 
 <div class="dock gut" id="dock" hidden><div class="col"><div class="info" id="dock-info"></div><button type="button" class="btn small" id="approve-ready">Approve ready</button><button type="button" class="btn primary small" id="send">Send</button></div></div>
 
 <nav class="nav gut" aria-label="Main">
   <div class="col">
     <button type="button" data-tab="capture" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>Capture</button>
-    <button type="button" data-tab="plan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg>Plan<span class="badge" id="plan-badge" hidden></span></button>
-    <button type="button" data-tab="systems"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg>Systems</button>
+    <button type="button" data-tab="review"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg>Review<span class="badge" id="plan-badge" hidden></span></button>
     <button type="button" data-tab="activity"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg>Activity</button>
-    <button type="button" data-tab="about"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg>About</button>
   </div>
 </nav>
+<div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
+</div>
+
+<!-- DEMO: everything that exists only because this is a prototype. -->
+<div class="demo-wrap" id="demo-wrap">
+<aside id="demo" class="demo-panel" aria-labelledby="demo-h">
+  <div class="demo-head">
+    <span class="demo-tag">Demo</span>
+    <h2 id="demo-h">Walkdown prototype</h2>
+    <button type="button" class="icon-btn demo-close" id="demo-close">Close</button>
+  </div>
+  <p class="demo-lead">The phone shows the product as a safety professional would use it. This panel holds the demo: scenarios, the simulated systems behind the product, and notes on what to look at.</p>
+  <p id="mode" class="demo-mode">Checking whether live AI is available…</p>
+
+  <section class="dsec" aria-labelledby="d-notice">
+    <h3 class="dh" id="d-notice">What to notice</h3>
+    <div id="notice" class="notice" aria-live="polite"></div>
+  </section>
+
+  <section class="dsec" aria-labelledby="d-scen">
+    <h3 class="dh" id="d-scen">1 · Pick a scenario</h3>
+    <p class="note">Loads a field capture into the phone. Then press <b>Build the plan</b> on the phone.</p>
+    <div class="scen" id="scen"></div>
+    <div id="scen-note" class="note"></div>
+    <p class="note">Use made-up details. Do not enter real names or real injury information.</p>
+  </section>
+
+  <section class="dsec" aria-labelledby="d-sys">
+    <div class="sec-h"><h3 class="dh" id="d-sys">2 · Behind the scenes: the site's systems</h3><button type="button" class="btn small" id="reset-sys">Reset all</button></div>
+    <p class="note">Simulated systems that run in your browser. Each has its own record types, pick-lists and IDs, and rejects invalid values. Switch one off to simulate an outage.</p>
+    <div id="systems" class="sysgrid"></div>
+  </section>
+
+  <section class="dsec" aria-labelledby="d-test">
+    <h3 class="dh" id="d-test">3 · Test the checks</h3>
+    <div id="inject-slot"></div>
+  </section>
+
+  <details class="dsec about">
+    <summary class="dh">How it works, what is real, privacy</summary>
+    <p class="lead">A safety professional sees a dozen things on a floor walk. Today each one is typed into a different system hours later, and the near misses, at-risk behaviors and spoken promises are what get lost. Walkdown takes one capture, in any form, and turns it into the right linked records across the systems a site already uses.</p>
+    <div>
+      <h4 class="dh">How a capture becomes a plan</h4>
+      <ol class="steps-list">
+        <li><div><b>Capture</b>Notes typed or dictated, photos, short video and photos of documents such as permits.</div></li>
+        <li><div><b>Read the media</b>Video is sampled into frames. The AI writes down what each photo, frame and document shows, including any written text.</div></li>
+        <li><div><b>Understand and plan</b>The AI splits the capture into events and proposes steps in each system: records, work orders, permit checks, training and alerts, with links between them.</div></li>
+        <li><div><b>Check</b>Rules in the app test every value before you see it. The list is below.</div></li>
+        <li><div><b>Review</b>You answer follow-up questions, fix values and approve or skip each step. Immediate alerts can go first.</div></li>
+        <li><div><b>Send</b>Steps go out in order. Each system's new ID is written into the records that depend on it, failures queue and retry, and every action is logged.</div></li>
+      </ol>
+    </div>
+    <div>
+      <h4 class="dh">Checks on every plan</h4>
+      <ul>
+        <li>Every value must quote the capture. If the quote is not there, the value is removed and you see what was suggested.</li>
+        <li>Values must come from each system's pick-lists and the site's location list.</li>
+        <li>Names and numbers must appear inside their own quote.</li>
+        <li>Severity, recordability, regulator reporting and priority are left for a person.</li>
+        <li>Behavior observations and training assignments never carry a worker's name.</li>
+        <li>Health details belong in restricted fields; anywhere else they are flagged.</li>
+        <li>Judging wording such as “careless” is flagged for a neutral rewrite.</li>
+        <li>A keyword rule backs up the AI on serious-injury precursors.</li>
+        <li>A scan of the raw capture raises an immediate alert for words like ambulance or hospital, even if the AI missed it.</li>
+        <li>Sentences that did not reach any step are underlined, so nothing drops out silently.</li>
+      </ul>
+    </div>
+    <div>
+      <h4 class="dh">What is real and what is mocked</h4>
+      <div class="real">
+        <div class="card"><b>Real</b><p class="note" style="margin-top:4px">The checks, the plan ordering, linking and retries, and the review flow run live. Inside Claude, the AI reads your own notes, photos and video frames.</p></div>
+        <div class="card"><b>Mocked</b><p class="note" style="margin-top:4px">The five systems are simulated in your browser. Outside Claude, the AI part of each scenario is a recorded result, replayed. Video sound is not transcribed yet.</p></div>
+      </div>
+    </div>
+    <div>
+      <h4 class="dh">Privacy</h4>
+      <p>In the public demo nothing leaves your browser. In live mode inside Claude, the capture goes to Claude on your own account. Records in the simulated systems stay in this browser. Please use made-up details.</p>
+    </div>
+  </details>
+
+  <section class="dsec">
+    <div id="about-links" class="row"></div>
+    <p class="note">Independent concept prototype by <span id="about-by"></span>. Not affiliated with any EHS software vendor. All names, companies and events are fictional.</p>
+  </section>
+</aside>
+</div>
+</div>
+
+<button type="button" class="demo-fab" id="demo-open" aria-controls="demo-wrap"><span class="demo-stripe" aria-hidden="true"></span>Demo</button>
 
 <div class="sheet-bg" id="fb" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="fb-h">
@@ -426,7 +498,6 @@ textarea.ctl{resize:vertical}
     <button type="button" class="btn primary block" id="fb-send">Prepare my feedback</button>
   </div>
 </div>
-<div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
 
 <script>/*DATA*/</script>
 <script>/*ENGINE*/</script>

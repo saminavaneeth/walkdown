@@ -75,21 +75,22 @@ function recompute(){
 }
 recompute();
 
-/* ===== Tabs ===== */
-const TABS = ["capture","plan","systems","activity","about"];
+/* ===== Tabs (product) ===== */
+const TABS = ["capture","review","activity"];
+function framed(){ try { return matchMedia("(min-width:960px)").matches; } catch (e) { return false; } }
+function scrollTop0(){ if (framed()) $("#screen").scrollTop = 0; else window.scrollTo(0, 0); }
 function showTab(t, keepScroll){
+  if (t === "plan") t = "review";
   if (!TABS.includes(t)) t = "capture";
   tab = t;
   TABS.forEach(x => { $("#v-" + x).hidden = x !== t; });
   $$(".nav button").forEach(b => { if (b.dataset.tab === t) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
   store("wd2.tab", t);
   if (t === "capture") renderCapture();
-  if (t === "plan") renderPlan();
-  if (t === "systems") renderSystems();
+  if (t === "review") renderPlan();
   if (t === "activity") renderLog();
-  if (t === "about") renderAbout();
-  renderDock();
-  if (!keepScroll) window.scrollTo(0, 0);
+  renderDock(); renderNotice();
+  if (!keepScroll) scrollTop0();
 }
 $$(".nav button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
 document.addEventListener("click", e => { const g = e.target.closest("[data-tab-go]"); if (g) showTab(g.dataset.tabGo); });
@@ -112,9 +113,13 @@ async function detect(){
 }
 function renderMode(){
   const m = $("#mode");
-  m.classList.toggle("live", mode === "live");
-  m.textContent = mode === "live" ? "Live AI" : mode === "checking" ? "Checking…" : "Demo";
-  m.title = mode === "live" ? "Claude reads your captures on your own Claude account." : "Demo scenarios replay a recorded AI result. Everything else runs live in your browser.";
+  if (mode === "checking"){ m.textContent = "Checking whether live AI is available…"; return; }
+  if (mode === "live"){
+    m.innerHTML = "<b>Live AI.</b> Claude reads your own captures on your own Claude account. The scenarios replay a recorded result unless you ask Claude to run them.";
+    return;
+  }
+  m.innerHTML = "<b>Recorded AI results.</b> Each scenario replays what the AI produced for it. The checks, the plan and the systems run live in your browser."
+    + (CONFIG.claudeUrl ? ' Your own notes, photos and video work in the <a href="' + esc(CONFIG.claudeUrl) + '" target="_blank" rel="noopener">live version inside Claude</a>.' : "");
 }
 
 /* ===== Capture ===== */
@@ -138,7 +143,7 @@ function renderScenarios(){
 function tileHTML(m){
   const pic = m.thumb ? '<img src="' + esc(m.thumb) + '" alt="">' : '<span class="ph">' + (ICON[m.kind] || ICON.photo) + "</span>";
   const sub = m.kind === "video" && m.frames ? " · " + m.frames + " frames" : "";
-  return '<div class="tile">' + pic + (m.demo ? '<span class="demo-tag">demo</span>' : '<button type="button" class="rm" data-rm="' + esc(m.id) + '" aria-label="Remove ' + esc(m.label) + '">×</button>')
+  return '<div class="tile">' + pic + (m.demo ? "" : '<button type="button" class="rm" data-rm="' + esc(m.id) + '" aria-label="Remove ' + esc(m.label) + '">×</button>')
     + '<div class="cap"><b>' + esc(m.label + sub) + "</b>" + esc(m.caption || "") + "</div></div>";
 }
 function renderMedia(){ $("#media").innerHTML = draft.media.map(tileHTML).join(""); $("#media").hidden = !draft.media.length; }
@@ -146,7 +151,6 @@ function imagesUsed(){ return userMedia().reduce((n, m) => n + ((blobs[m.id] || 
 function renderCapture(){
   renderScenarios();
   const s = scen();
-  $("#comp-title").textContent = s ? "Demo capture · " + s.title : "Your capture";
   const v = $("#voice");
   if (s && s.voice){ v.hidden = false; v.innerHTML = ICON.mic + "<b>Voice note " + esc(s.voice.duration) + '</b><span class="wave" aria-hidden="true"></span><span>Transcript below</span>'; }
   else v.hidden = true;
@@ -158,40 +162,53 @@ function renderCapture(){
   const mn = $("#media-note");
   if (mode === "live" && imagesOK) mn.textContent = "Up to " + maxImages + " images per capture. A video is sampled into 5 frames; its sound is not used yet.";
   else if (mode === "live") mn.textContent = "Photos cannot be sent from this view, so captures here are text only.";
-  else if (mode === "checking") mn.textContent = "";
-  else mn.innerHTML = "Your own photos, video and documents work in the live version inside Claude" + (CONFIG.claudeUrl ? ': <a href="' + esc(CONFIG.claudeUrl) + '" target="_blank" rel="noopener">open it</a>.' : ".");
+  else mn.textContent = "";
   renderProcess();
 }
+/* Demo-only hints shown inside the product get the demo look, so they never read as product. */
+function demoNote(html){ return '<p class="demo-note"><span class="demo-tag">Demo</span><span>' + html + "</span></p>"; }
+const LIVE_LINK = () => CONFIG.claudeUrl ? ' <a href="' + esc(CONFIG.claudeUrl) + '" target="_blank" rel="noopener">Open the live version</a>.' : "";
 function renderProcess(){
   const btn = $("#process"), msg = $("#proc-msg");
   const s = scen(), pristine = draftIsPristine();
   const hasInput = !!(draft.text.trim() || userMedia().length);
-  let dis = busy, note = "";
-  if (busy) note = "";
+  let dis = busy, note = "", inline = "", side = "";
+  if (busy){ /* the stage list shows progress */ }
   else if (pristine){
-    note = mode === "live" ? 'Uses the recorded AI result for this scenario, so it is instant. <button type="button" class="link" id="run-live-anyway">Run Claude on these notes instead</button>'
-      : "Replays a recorded AI result for this scenario. The checks, the plan and the systems all run live in your browser.";
+    if (mode === "live") side = 'For speed, <b>Build the plan</b> replays the recorded AI result for this scenario. <button type="button" class="link" id="run-live-anyway">Run Claude on these notes instead</button>';
+    else {
+      side = "<b>Build the plan</b> replays the recorded AI result for this scenario.";
+      inline = demoNote("This version replays recorded scenarios. Your own notes, photos and video work in the live version." + LIVE_LINK());
+    }
   } else if (mode === "live"){
     dis = !hasInput;
-    note = hasInput ? "Claude reads your capture on your own Claude account. It takes about 20 to 60 seconds." : "Type or dictate what you saw, or add a photo.";
-  } else if (mode === "checking"){ dis = true; note = "Checking whether live AI is available…"; }
+    note = hasInput ? "Takes about 20 to 60 seconds." : "Type or dictate what you saw, or add a photo.";
+    if (hasInput) inline = demoNote("Use made-up details. Do not enter real names or real injury information.");
+  } else if (mode === "checking"){ dis = true; side = "Checking whether live AI is available…"; }
   else {
     dis = true;
-    note = s ? 'You changed the demo notes, and the recorded result only matches the original. <button type="button" class="link" id="restore-scen">Restore the original</button>'
-      : "In this demo, choose a scenario above.";
-    note += " Live AI on your own notes runs inside Claude" + (CONFIG.claudeUrl ? ': <a href="' + esc(CONFIG.claudeUrl) + '" target="_blank" rel="noopener">open the live version</a>.' : ".");
+    const restore = s ? ' <button type="button" class="link" id="restore-scen">Restore the original notes</button>' : "";
+    inline = demoNote((s ? "The recorded result only matches the original scenario notes." : "This version only processes the recorded scenarios. Pick one in the demo panel.") + restore + LIVE_LINK());
+    side = s ? "You changed the scenario notes, so the recorded result no longer matches." + restore : "";
   }
   btn.disabled = dis;
   btn.textContent = busy ? "Working…" : "Build the plan";
   msg.innerHTML = (procErr ? '<span class="errline">' + esc(procErr) + "</span> " : "") + note;
+  msg.hidden = !msg.innerHTML;
+  $("#demo-inline").innerHTML = inline;
+  $("#scen-note").innerHTML = side;
+  renderNotice();
 }
 function pickScenario(id){
   if (busy) return;
   const s = SCENARIOS.find(x => x.id === id); if (!s) return;
   userMedia().forEach(m => { delete blobs[m.id]; });
   draft = {scenario:s.id, text:s.text, media:s.media.map(m => Object.assign({demo:true}, m))};
-  procErr = ""; saveDraft(); renderCapture();
-  scrollToEl($("#composer"));
+  procErr = ""; saveDraft();
+  closeDemo();
+  if (tab !== "capture") showTab("capture"); else renderCapture();
+  renderNotice();
+  scrollToEl($("#composer")); flash($("#composer"));
 }
 $("#scen").addEventListener("click", e => { const b = e.target.closest("[data-s]"); if (b) pickScenario(b.dataset.s); });
 $("#cap-text").addEventListener("input", e => { draft.text = e.target.value; procErr = ""; clearTimeout(saveDraft._t); saveDraft._t = setTimeout(saveDraft, 400); renderProcess(); });
@@ -204,8 +221,8 @@ $("#media").addEventListener("click", e => {
   const b = e.target.closest("[data-rm]"); if (!b || busy) return;
   delete blobs[b.dataset.rm]; draft.media = draft.media.filter(m => m.id !== b.dataset.rm); relabel(); renderCapture();
 });
-$("#proc-msg").addEventListener("click", e => {
-  if (e.target.closest("#run-live-anyway")) runLive(true);
+document.addEventListener("click", e => {
+  if (e.target.closest("#run-live-anyway")){ closeDemo(); runLive(true); }
   if (e.target.closest("#restore-scen") && scen()) pickScenario(scen().id);
 });
 function relabel(){
@@ -311,8 +328,8 @@ async function replay(){
   busy = true; procErr = ""; renderCapture(); $("#stop").hidden = true;
   for (let i = 0; i < STAGES.length; i++){ setStage(i, "Recorded AI result"); await sleep(reduceMotion ? 60 : 420); }
   makePlan({raw:clone(s.recorded), input:inputFromDraft(true), source:"recorded", title:s.title, scenario:s.id});
-  busy = false; $("#stages-wrap").hidden = true;
-  showTab("plan");
+  busy = false; $("#stages-wrap").hidden = true; renderCapture();
+  showTab("review");
 }
 async function runLive(textOnly){
   if (!sampleNs || busy) return;
@@ -344,8 +361,8 @@ async function runLive(textOnly){
     setStage(3); await sleep(250);
     const first = Array.isArray(raw.events) && raw.events[0] && raw.events[0].summary ? String(raw.events[0].summary) : "";
     makePlan({raw, input, source:"live", title:first ? (raw.events.length > 1 ? first + " and " + plural(raw.events.length - 1, "more event") : first) : "Your capture", scenario:null});
-    clearInterval(tick); busy = false; runCtl = null; $("#stages-wrap").hidden = true; $("#stop").hidden = true;
-    showTab("plan");
+    clearInterval(tick); busy = false; runCtl = null; $("#stages-wrap").hidden = true; $("#stop").hidden = true; renderCapture();
+    showTab("review");
     return;
   } catch (e) {
     if (e && e.code === "cancelled") procErr = "Stopped.";
@@ -364,7 +381,9 @@ function makePlan(o){
   plan = {id:"cap" + now().toString(36), at:now(), source:o.source, title:o.title, scenario:o.scenario, input:o.input, raw:o.raw, injected:null, review:{}, exec:{}, ids:{}};
   recompute(); savePlan();
   const removed = chk.log.unsupported + chk.log.invalid + chk.log.ungrounded + chk.log.decisions;
-  addLog((o.source === "live" ? "Claude drafted a plan: " : "Replayed a recorded plan: ") + plural(chk.steps.length, "step") + " across " + plural(systemsUsed().length, "system") + ". Checks removed " + plural(removed, "value") + (chk.fastTerms.length ? " and raised an immediate alert." : "."), "plan");
+  if (o.source !== "live") addLog("Used the recorded AI result for the “" + o.title + "” scenario.", "demo");
+  addLog("AI drafted a plan: " + plural(chk.steps.length, "step") + " across " + plural(systemsUsed().length, "system") + ". Checks removed " + plural(removed, "value") + (chk.fastTerms.length ? " and raised an immediate alert." : "."), "plan");
+  renderPanel();
 }
 
 /* ===== Plan helpers ===== */
@@ -545,18 +564,26 @@ function summaryHTML(){
   const dec = steps.filter(s => rv(s.id).status !== "skipped").reduce((n, s) => n + decisionsOpen(s).length, 0);
   const removed = chk.log.unsupported + chk.log.invalid + chk.log.ungrounded + chk.log.decisions;
   const cov = chk.coverage.total ? Math.round(100 * chk.coverage.covered / chk.coverage.total) : 100;
-  const anySent = Object.keys(plan.exec).length > 0;
-  const nf = plan.injected ? plan.injected.faults.length : 4;
-  return '<div class="card summary"><div class="recbadge"><b>' + (plan.source === "live" ? "Live from Claude" : "Recorded AI result") + "</b><span>Built " + hhmm(plan.at) + "</span></div>"
+  return '<div class="card summary"><div class="recbadge"><b>AI draft</b><span>Built ' + hhmm(plan.at) + "</span></div>"
     + "<h2>" + esc(plan.title) + "</h2>"
     + '<div class="row">' + systemsUsed().map(id => { const s = systemById(id); return '<span class="sys sys-' + esc(id) + '" title="' + esc(s.name) + '">' + esc(s.code) + "</span>"; }).join("") + "</div>"
     + '<div class="stats"><span><b>' + steps.length + "</b> steps</span><span><b>" + chk.events.length + "</b> events</span><span><b>" + approved + "</b> approved</span><span><b>" + sentCount() + "</b> sent</span><span><b>" + qOpen + "</b> open " + (qOpen === 1 ? "question" : "questions") + "</span><span><b>" + dec + "</b> " + (dec === 1 ? "decision" : "decisions") + " for a person</span><span><b>" + removed + "</b> " + (removed === 1 ? "value" : "values") + " removed by checks</span><span><b>" + cov + "%</b> of sentences used</span></div>"
-    + '<div class="row"><button type="button" class="btn small" id="inject"' + (anySent ? " disabled" : "") + ">" + (plan.injected ? "Remove the test mistakes" : "Test the checks: add " + nf + " AI mistakes") + '</button><button type="button" class="btn small" data-tab-go="capture">New capture</button></div>'
-    + (anySent && !plan.injected ? '<p class="note">The mistake test is available before anything is sent.</p>' : "")
+    + '<div class="row"><button type="button" class="btn small" data-tab-go="capture">New capture</button></div>'
     + "</div>";
 }
+/* Demo panel: the deliberate-mistake test. */
+function renderInject(){
+  const box = $("#inject-slot");
+  if (!plan || !chk){ box.innerHTML = '<p class="note">Build a plan first. Then you can add up to four typical AI mistakes to its draft and see whether the checks catch them.</p>'; return; }
+  const anySent = Object.keys(plan.exec).length > 0;
+  const nf = plan.injected ? plan.injected.faults.length : 4;
+  box.innerHTML = '<p class="note">Adds typical AI mistakes to the current draft, such as an invented name with a quote that is not in the capture, a location that is not on the site list, a field only a person should decide, or judging wording. The plan on the phone then shows what the checks did.</p>'
+    + '<div class="row"><button type="button" class="btn small" id="inject"' + (anySent ? " disabled" : "") + ">" + (plan.injected ? "Remove the test mistakes" : "Add " + nf + " AI mistakes") + "</button></div>"
+    + (anySent && !plan.injected ? '<p class="note">Available before anything is sent. Reset the systems to try it.</p>' : "")
+    + injectHTML();
+}
 function injectHTML(){
-  if (!plan.injected) return "";
+  if (!plan || !plan.injected) return "";
   const f = plan.injected.faults, caught = f.filter(x => x.caught).length;
   return '<div class="inject"><b>' + plural(f.length, "mistake") + " added to the AI draft. The checks caught " + caught + " of " + f.length + ".</b><ul>"
     + f.map(x => '<li class="' + (x.caught ? "" : "miss") + '"><span class="mk">' + (x.caught ? "✓ caught" : "✗ missed") + "</span>" + esc(x.what) + ' · <button type="button" class="link" data-goto="' + esc(x.sid) + '">see #' + (numMap[x.sid] || "?") + "</button></li>").join("") + "</ul></div>";
@@ -586,7 +613,7 @@ function displayOrder(){
 function renderPlan(){
   const box = $("#plan");
   if (!plan || !chk){
-    box.innerHTML = '<div class="empty"><h3>No plan yet</h3><p>Choose a demo scenario or describe what you saw, then press <b>Build the plan</b>.</p><div><button type="button" class="btn primary" data-tab-go="capture">Go to Capture</button></div></div>';
+    box.innerHTML = '<div class="empty"><h3>No plan yet</h3><p>Describe what you saw on the Capture screen, then press <b>Build the plan</b>.</p><div><button type="button" class="btn primary" data-tab-go="capture">Go to Capture</button></div></div>';
     renderDock(); renderBadge(); return;
   }
   const groups = displayOrder(); numMap = {}; let n = 0;
@@ -614,7 +641,7 @@ function renderBadge(){
 }
 function renderDock(){
   const d = $("#dock");
-  if (tab !== "plan" || !plan || !chk){ d.hidden = true; return; }
+  if (tab !== "review" || !plan || !chk){ d.hidden = true; return; }
   const steps = chk.steps;
   const toSend = steps.filter(s => rv(s.id).status === "approved" && (!ex(s.id) || ["failed","queued","waiting"].includes(ex(s.id).state)));
   const ready = steps.filter(s => rv(s.id).status === "draft" && !ex(s.id) && isReady(s));
@@ -622,8 +649,8 @@ function renderDock(){
   const sent = sentCount(), skipped = steps.filter(s => rv(s.id).status === "skipped").length;
   d.hidden = false;
   if (sent + skipped === steps.length && !sending){
-    $("#dock-info").textContent = "Done: " + sent + " sent" + (skipped ? ", " + skipped + " skipped" : "") + ". See them in Systems.";
-    $("#approve-ready").hidden = true; $("#send").textContent = "Open Systems"; $("#send").disabled = false; $("#send").dataset.go = "systems"; return;
+    $("#dock-info").textContent = "Done: " + sent + " sent" + (skipped ? ", " + skipped + " skipped" : "") + ".";
+    $("#approve-ready").hidden = true; $("#send").textContent = "New capture"; $("#send").disabled = false; $("#send").dataset.go = "capture"; return;
   }
   $("#send").dataset.go = "";
   $("#approve-ready").hidden = false;
@@ -675,7 +702,6 @@ $("#plan").addEventListener("click", e => {
   const m = t.closest("mark.ev"); if (m){ showSteps((m.dataset.r || "").split(" ")); return; }
   const g = t.closest("[data-goto]"); if (g){ goStep(g.dataset.goto); return; }
   const fst = t.closest("[data-fast]"); if (fst){ sendFast(fst.dataset.fast); return; }
-  if (t.closest("#inject")) toggleInject();
 });
 function stepAction(sid, act){
   const step = stepById(sid); if (!step) return;
@@ -691,7 +717,7 @@ function stepAction(sid, act){
   } else if (act === "reopen"){
     r.status = "draft"; addLog("Reopened #" + n + ".", "review");
   }
-  savePlan(); rerenderStep(sid); refreshTop(); renderDock(); renderBadge();
+  savePlan(); rerenderStep(sid); refreshTop(); renderDock(); renderBadge(); renderNotice();
 }
 function goStep(sid){ const el = $("#st-" + CSS.escape(sid)); if (el){ scrollToEl(el); flash(el); } }
 function showEvidence(qid){
@@ -717,15 +743,15 @@ function toggleInject(){
   }
   recompute();
   if (plan.injected){ const c = plan.injected.faults.filter(f => f.caught).length; addLog("Checks caught " + c + " of " + plan.injected.faults.length + " test mistakes.", "test"); }
-  savePlan(); renderPlan();
-  const box = $(".inject"); if (box) scrollToEl(box);
+  savePlan(); renderPlan(); renderPanel();
+  const box = $("#inject-slot .inject"); if (box) scrollToEl(box);
 }
 $("#approve-ready").addEventListener("click", () => {
   if (!plan || !chk || sending) return;
   const ready = chk.steps.filter(s => rv(s.id).status === "draft" && !ex(s.id) && isReady(s));
   ready.forEach(s => { rv(s.id).status = "approved"; });
   if (ready.length) addLog("Approved " + plural(ready.length, "ready step") + ": " + ready.map(s => "#" + numMap[s.id]).join(", ") + ".", "review");
-  savePlan(); renderPlan();
+  savePlan(); renderPlan(); renderNotice();
 });
 $("#send").addEventListener("click", () => { if ($("#send").dataset.go){ showTab($("#send").dataset.go); return; } sendPlan(null); });
 function sendFast(sid){
@@ -765,13 +791,13 @@ async function sendPlan(only){
       plan.exec[s.id] = {state:"failed", error:res.error, code:res.code, at:now()}; tally.failed++;
       addLog(n + " rejected by " + sname + " (" + res.code + "): " + res.error, "failed");
     }
-    saveSys(); rerenderStep(s.id);
+    saveSys(); rerenderStep(s.id); renderSystems();
   }
   /* Steps that were waiting on something sent just now can go too. */
   const unblocked = chk.order.map(stepById).filter(s => s && ex(s.id) && ex(s.id).state === "waiting" && s.links.every(l => { const d = stepById(l.from); return !d || rv(d.id).status === "skipped" || (ex(d.id) && ex(d.id).state === "sent"); }));
   sending = false; savePlan();
   if (unblocked.length && tally.sent){ return sendPlan(unblocked.map(s => s.id)); }
-  renderPlan();
+  renderPlan(); renderPanel();
   const parts = [];
   if (tally.sent) parts.push(tally.sent + " sent");
   if (tally.queued) parts.push(tally.queued + " queued");
@@ -802,24 +828,80 @@ $("#systems").addEventListener("change", e => {
   const id = c.dataset.sys, sd = systemById(id);
   sys[id].down = !c.checked; saveSys();
   addLog(sd.name + (sys[id].down ? " went offline (simulated outage)." : " is back online."), "system");
-  renderSystems();
+  renderSystems(); renderNotice();
   if (!sys[id].down && plan && chk){
     const retry = chk.steps.filter(s => ex(s.id) && ["queued","waiting"].includes(ex(s.id).state)).map(s => s.id);
-    if (retry.length){ toast(sd.name + " is back. Retrying " + plural(retry.length, "step") + "."); addLog("Retrying " + plural(retry.length, "queued step") + ".", "system"); sendPlan(retry).then(() => { if (tab === "systems") renderSystems(); }); }
+    if (retry.length){ toast(sd.name + " is back. Retrying " + plural(retry.length, "step") + "."); addLog("Retrying " + plural(retry.length, "queued step") + ".", "system"); sendPlan(retry); }
   }
 });
 $("#reset-sys").addEventListener("click", () => {
   sys = newSystemsState(); saveSys();
   if (plan){ plan.exec = {}; plan.ids = {}; savePlan(); }
   addLog("All systems reset. Sent steps in the plan are back to approved.", "system");
-  renderSystems(); renderBadge(); toast("Systems reset.");
+  renderPanel(); renderBadge(); if (tab === "review") renderPlan(); toast("Systems reset.");
 });
 
 /* ===== Activity ===== */
 function renderLog(){
-  $("#log").innerHTML = logs.length ? logs.map(l => '<li><time>' + hhmm(l.at) + "</time><span>" + esc(l.text) + "</span></li>").join("") : '<li><time></time><span class="muted">Nothing yet. Build a plan to start the trail.</span></li>';
+  const DEMO_KINDS = ["demo","system","test"];
+  $("#log").innerHTML = logs.length ? logs.map(l => DEMO_KINDS.includes(l.kind)
+      ? '<li class="demo"><time>' + hhmm(l.at) + '</time><span><span class="demo-tag">Demo</span>' + esc(l.text) + "</span></li>"
+      : "<li><time>" + hhmm(l.at) + "</time><span>" + esc(l.text) + "</span></li>").join("") : '<li><time></time><span class="muted">Nothing yet. Build a plan to start the trail.</span></li>';
 }
 $("#clear-log").addEventListener("click", () => { logs = []; store("wd2.log", logs); renderLog(); });
+
+/* ===== Demo panel ===== */
+function openDemo(){
+  if (framed()){ const p = $("#demo"); scrollToEl($("#d-scen")); flash(p); return; }
+  $("#demo-wrap").classList.add("open"); $("#demo-open").classList.remove("pulse"); store("wd2.demoSeen", true);
+  $("#demo-close").focus();
+}
+function closeDemo(){
+  const w = $("#demo-wrap"); if (!w.classList.contains("open")) return;
+  w.classList.remove("open"); $("#demo-open").focus();
+}
+$("#demo-open").addEventListener("click", openDemo);
+$("#demo-close").addEventListener("click", closeDemo);
+$("#demo-wrap").addEventListener("click", e => { if (e.target === $("#demo-wrap")) closeDemo(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#fb").hidden) closeDemo(); });
+document.addEventListener("click", e => { if (e.target.closest("[data-open-demo]")) openDemo(); });
+$("#demo").addEventListener("click", e => {
+  const g = e.target.closest("[data-goto]");
+  if (g){ closeDemo(); if (tab !== "review") showTab("review"); goStep(g.dataset.goto); return; }
+  if (e.target.closest("#inject")) toggleInject();
+});
+if (!load("wd2.demoSeen", false) && !reduceMotion) $("#demo-open").classList.add("pulse");
+
+/* "What to notice": a few lines that follow what the product is showing. */
+const NOTICE = {
+  capture: ["This is the product as a safety professional sees it on their phone.", "They describe the walk the way they would tell a colleague: a voice note, photos, a photo of a permit, or typed notes.", "Press <b>Build the plan</b> on the phone, or pick another scenario below."],
+  building: ["The AI splits the capture into events and proposes steps in each system.", "Rules in the app then check every value before anyone sees the plan."],
+  review: ["Every value quotes the capture. Tap a highlighted quote to see where it came from.", "Severity, recordability, regulator reporting and priority stay empty for a person to decide.", "Nothing is sent until each step is approved."],
+  "review-alert": ["Words like ambulance or hospital put an immediate alert at the top, so it can go out before the rest is reviewed.", "A rule raises it even if the AI misses it."],
+  "review-injected": ["Deliberate AI mistakes were added to this draft. Each affected step on the phone shows what the checks removed and why.", "The tally is under <b>Test the checks</b> below."],
+  sending: ["Sent steps show the ID each system returned. Steps that link to them get those IDs filled in before they send.", "Watch the records arrive under <b>Behind the scenes</b> below."],
+  queued: ["A system is offline, so its steps are queued instead of lost.", "Switch it back on below and they retry by themselves."],
+  done: ["Every step is sent or skipped. The records below link to each other by ID.", "<b>Activity</b> on the phone keeps the trail: what the AI drafted, what a person changed and approved, what each system received."],
+  activity: ["Activity is the audit trail: what the AI drafted, what a person changed and approved, and what each system received.", "Lines marked Demo come from the demo, not from the product."]
+};
+function noticeKey(){
+  if (busy) return "building";
+  if (tab === "activity") return "activity";
+  if (tab !== "review" || !plan || !chk) return "capture";
+  const st = chk.steps.map(stepState);
+  if (st.includes("queued")) return "queued";
+  if (st.every(x => x === "sent" || x === "skipped")) return "done";
+  if (plan.injected) return "review-injected";
+  if (chk.steps.some(s => s.system === "alerts" && s.flags.some(f => f.kind === "fast_lane") && !["sent","skipped"].includes(stepState(s)))) return "review-alert";
+  if (st.includes("sent")) return "sending";
+  return "review";
+}
+function renderNotice(){
+  const k = noticeKey(), box = $("#notice");
+  if (box.dataset.k === k) return;
+  box.dataset.k = k; box.innerHTML = NOTICE[k].map(t => "<p>" + t + "</p>").join("");
+}
+function renderPanel(){ renderNotice(); renderInject(); renderSystems(); }
 
 /* ===== About ===== */
 function renderAbout(){
@@ -836,9 +918,9 @@ $("#about-links").addEventListener("click", e => { if (e.target.closest("#about-
 /* ===== Feedback ===== */
 let fbRate = 0;
 function renderRate(){ $("#fb-rate").innerHTML = [1,2,3,4,5].map(n => '<button type="button" data-rate="' + n + '" aria-pressed="' + (fbRate === n) + '">' + n + "</button>").join(""); }
-function openFb(){ renderRate(); $("#fb").hidden = false; $("#fb-err").textContent = ""; $("#fb-out").hidden = true; $("#fb-role").focus(); }
-function closeFb(){ $("#fb").hidden = true; $("#fb-open").focus(); }
-$("#fb-open").addEventListener("click", openFb);
+let fbReturn = null;
+function openFb(){ fbReturn = document.activeElement; closeDemo(); renderRate(); $("#fb").hidden = false; $("#fb-err").textContent = ""; $("#fb-out").hidden = true; $("#fb-role").focus(); }
+function closeFb(){ $("#fb").hidden = true; if (fbReturn && fbReturn.isConnected && fbReturn.offsetParent) fbReturn.focus(); }
 $("#fb-close").addEventListener("click", closeFb);
 $("#fb").addEventListener("click", e => { if (e.target === $("#fb")) closeFb(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#fb").hidden) closeFb(); });
@@ -864,5 +946,7 @@ $("#fb-out").addEventListener("click", async e => {
 
 /* ===== Start ===== */
 renderMode();
+renderAbout();
 showTab(load("wd2.tab", "capture"), true);
+renderPanel();
 detect();
